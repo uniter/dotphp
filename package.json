@@ -1,0 +1,44 @@
+{
+  "version": "1.0.0",
+  "name": "dotphp",
+  "description": "Require PHP files under Node.js with Uniter",
+  "keywords": [
+    "php",
+    "uniter"
+  ],
+  "homepage": "https://github.com/uniter/dotphp",
+  "author": "Dan Phillimore <dan@ovms.co> (http://ovms.co)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/uniter/dotphp"
+  },
+  "bugs": {
+    "email": "dan@ovms.co",
+    "url": "http://github.com/uniter/dotphp/issues"
+  },
+  "main": "index",
+  "scripts": {
+    "jshint": "jshint .",
+    "mocha": "mocha -r test/harness --recursive test/unit/ test/integration/",
+    "test": "npm run jshint && npm run mocha"
+  },
+  "dependencies": {
+    "microdash": "~1",
+    "phpruntime": "~5",
+    "phptoast": "~4",
+    "phptojs": "~4"
+  },
+  "devDependencies": {
+    "chai": "^2.3.0",
+    "chai-as-promised": "^5.1.0",
+    "jshint": "~2.8",
+    "mocha": "^2.3.3",
+    "nowdoc": "^1.0.0",
+    "sinon": "~1.15",
+    "sinon-chai": "^2.7.0"
+  },
+  "engines": {
+    "node": ">=0.6"
+  },
+  "license": "MIT"
+}

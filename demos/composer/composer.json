@@ -1,0 +1,19 @@
+{
+    "name": "uniter/composer-dotphp",
+    "description": "Demo of using DotPHP with Composer",
+    "autoload": {
+        "psr-4": {
+            "Uniter\\DotPHP\\": "src/"
+        }
+    },
+    "require": {
+        "symfony/event-dispatcher": "^3.1"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Dan Phillimore",
+            "email": "dan@ovms.co"
+        }
+    ]
+}
