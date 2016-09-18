@@ -5,6 +5,13 @@ DotPHP
 
 Require PHP files from Node.js with [Uniter](https://github.com/asmblah/uniter).
 
+Installing
+----------
+
+```shell
+npm install --save dotphp
+```
+
 Hooking Uniter into require(...)
 --------------------------------
 You can install a custom `require(...)` extension that will use Uniter to compile the specified PHP file to JS and include it.
@@ -41,7 +48,7 @@ print 'Hello from my_module!';
 
 JS file `my_entrypoint.js`:
 ```javascript
-require('dotphp').require('/my_module.php');
+require('dotphp').require('./my_module.php');
 ```
 
 Keeping up to date
