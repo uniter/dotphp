@@ -35,7 +35,7 @@ require('./my_module.php');
 
 Requiring PHP files without hooking require(...)
 ------------------------------------------------
-You can also require PHP files without interfering with require(...) behaviour by using the `.require(...)` method.
+You can also require PHP files without interfering with `require(...)` behaviour by using the `<DotPHP>.require(...)` method.
 
 Example:
 
