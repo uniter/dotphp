@@ -18,7 +18,7 @@
   },
   "main": "index",
   "bin": {
-    "dotphp": "bin/dotphp"
+    "dotphp": "bin/dotphp.js"
   },
   "scripts": {
     "jshint": "jshint .",
