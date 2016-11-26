@@ -14,9 +14,14 @@ var _ = require('microdash');
 /**
  * @param {RequireExtension} requireExtension
  * @param {Requirer} requirer
+ * @param {Evaluator} evaluator
  * @constructor
  */
-function DotPHP(requireExtension, requirer) {
+function DotPHP(requireExtension, requirer, evaluator) {
+    /**
+     * @type {Evaluator}
+     */
+    this.evaluator = evaluator;
     /**
      * @type {RequireExtension}
      */
@@ -28,6 +33,17 @@ function DotPHP(requireExtension, requirer) {
 }
 
 _.extend(DotPHP.prototype, {
+    /**
+     * Executes and returns the result of the specified PHP code
+     *
+     * @param {string} phpCode
+     * @param {string} filePath
+     * @returns {Promise|Value}
+     */
+    evaluate: function (phpCode, filePath) {
+        return this.evaluator.evaluate(phpCode, filePath);
+    },
+
     /**
      * Registers the `.php` extension handler for Node
      */

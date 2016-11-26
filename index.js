@@ -10,31 +10,39 @@
 'use strict';
 
 var DotPHP = require('./src/DotPHP'),
+    Evaluator = require('./src/Evaluator'),
     FileSystem = require('./src/FileSystem'),
     FileSystemFactory = require('./src/FileSystemFactory'),
     IncluderFactory = require('./src/IncluderFactory'),
     IO = require('./src/IO'),
+    Performance = require('./src/Performance'),
     RequireExtension = require('./src/RequireExtension'),
     Requirer = require('./src/Requirer'),
+    Stream = require('./src/Stream'),
+    StreamFactory = require('./src/StreamFactory'),
     Transpiler = require('./src/Transpiler'),
     fs = require('fs'),
+    microtime = require('microtime'),
     phpToAST = require('phptoast'),
     phpToJS = require('phptojs'),
     transpiler = new Transpiler(
-        phpToAST.create(),
+        phpToAST.create(null, {captureAllOffsets: true}),
         phpToJS,
         require
     ),
-    requirer = new Requirer(
-        fs,
+    streamFactory = new StreamFactory(Stream, fs),
+    evaluator = new Evaluator(
         transpiler,
         new IO(process),
-        new FileSystemFactory(FileSystem, fs),
-        new IncluderFactory(fs, transpiler)
+        new FileSystemFactory(FileSystem, fs, streamFactory),
+        new IncluderFactory(fs, transpiler),
+        new Performance(microtime)
     ),
+    requirer = new Requirer(fs, evaluator),
     dotPHP = new DotPHP(
         new RequireExtension(requirer, require),
-        requirer
+        requirer,
+        evaluator
     );
 
 module.exports = dotPHP;

@@ -11,50 +11,46 @@
 
 var expect = require('chai').expect,
     sinon = require('sinon'),
-    FileSystemFactory = require('../../src/FileSystemFactory'),
-    IncluderFactory = require('../../src/IncluderFactory'),
-    IO = require('../../src/IO'),
-    Requirer = require('../../src/Requirer'),
-    Transpiler = require('../../src/Transpiler');
+    Evaluator = require('../../src/Evaluator'),
+    Requirer = require('../../src/Requirer');
 
 describe('Requirer', function () {
     beforeEach(function () {
-        this.compiledModule = sinon.stub();
-        this.fileSystemFactory = sinon.createStubInstance(FileSystemFactory);
+        this.evaluator = sinon.createStubInstance(Evaluator);
+        this.file = {
+            toString: sinon.stub()
+        };
         this.fs = {
-            readFileSync: sinon.stub().returns({toString: sinon.stub().returns('my text')})
+            readFileSync: sinon.stub().withArgs('/my/module.php').returns(this.file)
         };
-        this.includer = sinon.stub();
-        this.includerFactory = sinon.createStubInstance(IncluderFactory);
-        this.io = sinon.createStubInstance(IO);
-        this.phpEngine = {
-            execute: sinon.stub()
-        };
-        this.transpiler = sinon.createStubInstance(Transpiler);
-
-        this.compiledModule.returns(this.phpEngine);
-        this.includerFactory.create.returns(this.includer);
-        this.transpiler.transpile.returns(this.compiledModule);
 
         this.requirer = new Requirer(
             this.fs,
-            this.transpiler,
-            this.io,
-            this.fileSystemFactory,
-            this.includerFactory
+            this.evaluator
         );
     });
 
     describe('require()', function () {
-        it('should install the IO for the compiled PHP module', function () {
+        it('should evaluate the source of the file', function () {
+            this.file.toString.returns('<?php print 21;');
+
             this.requirer.require('/my/module.php');
 
-            expect(this.io.install).to.have.been.calledOnce;
-            expect(this.io.install).to.have.been.calledWith(sinon.match.same(this.phpEngine));
+            expect(this.evaluator.evaluate).to.have.been.calledOnce;
+            expect(this.evaluator.evaluate).to.have.been.calledWith('<?php print 21;');
         });
 
-        it('should return the result from executing the module', function () {
-            this.phpEngine.execute.returns(21);
+        it('should pass the file path to the Evaluator', function () {
+            this.file.toString.returns('<?php print 21;');
+
+            this.requirer.require('/my/module.php');
+
+            expect(this.evaluator.evaluate).to.have.been.calledOnce;
+            expect(this.evaluator.evaluate).to.have.been.calledWith(sinon.match.any, '/my/module.php');
+        });
+
+        it('should return the result from the Evaluator', function () {
+            this.evaluator.evaluate.returns(21);
 
             expect(this.requirer.require('/my/module.php')).to.equal(21);
         });

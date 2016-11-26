@@ -17,13 +17,19 @@
     "url": "http://github.com/uniter/dotphp/issues"
   },
   "main": "index",
+  "bin": {
+    "dotphp": "bin/dotphp"
+  },
   "scripts": {
     "jshint": "jshint .",
     "mocha": "mocha -r test/harness --recursive test/unit/ test/integration/",
     "test": "npm run jshint && npm run mocha"
   },
   "dependencies": {
+    "lie": "^3.0.1",
     "microdash": "~1",
+    "microtime": "^2.1.1",
+    "minimist": "^1.2.0",
     "phpruntime": "~5",
     "phptoast": "~4",
     "phptojs": "~4"

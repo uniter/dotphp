@@ -51,7 +51,16 @@ _.extend(Transpiler.prototype, {
         transpiler.phpParser.getState().setPath(filePath);
 
         phpAST = transpiler.phpParser.parse(phpCode);
-        transpiledCode = transpiler.phpToJS.transpile(phpAST, {path: filePath, sync: true});
+        transpiledCode = transpiler.phpToJS.transpile(
+            phpAST,
+            {
+                path: filePath,
+                sync: true,
+                sourceMap: {
+                    sourceContent: phpCode
+                }
+            }
+        );
         /*jshint evil:true */
         compiledModule = new Function('require', 'return ' + transpiledCode)(transpiler.require);
 

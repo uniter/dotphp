@@ -12,15 +12,35 @@
 var expect = require('chai').expect,
     sinon = require('sinon'),
     DotPHP = require('../../src/DotPHP'),
+    Evaluator = require('../../src/Evaluator'),
     RequireExtension = require('../../src/RequireExtension'),
     Requirer = require('../../src/Requirer');
 
 describe('DotPHP', function () {
     beforeEach(function () {
+        this.evaluator = sinon.createStubInstance(Evaluator);
         this.requireExtension = sinon.createStubInstance(RequireExtension);
         this.requirer = sinon.createStubInstance(Requirer);
 
-        this.dotPHP = new DotPHP(this.requireExtension, this.requirer);
+        this.dotPHP = new DotPHP(this.requireExtension, this.requirer, this.evaluator);
+    });
+
+    describe('evaluate()', function () {
+        it('should ask the Evaluator to evaluate the PHP code', function () {
+            this.dotPHP.evaluate('<?php print "my program";', '/some/module.php');
+
+            expect(this.evaluator.evaluate).to.have.been.calledOnce;
+            expect(this.evaluator.evaluate).to.have.been.calledWith(
+                '<?php print "my program";',
+                '/some/module.php'
+            );
+        });
+
+        it('should return the result from the Evaluator', function () {
+            this.evaluator.evaluate.returns(21);
+
+            expect(this.dotPHP.evaluate('<?php print "my program";', '/some/module.php')).to.equal(21);
+        });
     });
 
     describe('register()', function () {

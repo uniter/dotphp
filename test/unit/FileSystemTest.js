@@ -11,7 +11,9 @@
 
 var expect = require('chai').expect,
     sinon = require('sinon'),
-    FileSystem = require('../../src/FileSystem');
+    FileSystem = require('../../src/FileSystem'),
+    Stream = require('../../src/Stream'),
+    StreamFactory = require('../../src/StreamFactory');
 
 describe('FileSystem', function () {
     beforeEach(function () {
@@ -20,11 +22,16 @@ describe('FileSystem', function () {
             isFile: sinon.stub().returns(false)
         };
         this.fs = {
+            open: sinon.stub(),
+            openSync: sinon.stub(),
             realpathSync: sinon.stub().returns('/a/real/path'),
-            statSync: sinon.stub().returns(this.stats)
+            statSync: sinon.stub().returns(this.stats),
+            unlink: sinon.stub(),
+            unlinkSync: sinon.stub()
         };
+        this.streamFactory = sinon.createStubInstance(StreamFactory);
 
-        this.fileSystem = new FileSystem(this.fs, '/my/base/path');
+        this.fileSystem = new FileSystem(this.fs, this.streamFactory, '/my/base/path');
     });
 
     describe('isDirectory()', function () {
@@ -85,6 +92,33 @@ describe('FileSystem', function () {
         });
     });
 
+    describe('open()', function () {
+        it('should be resolved with the created Stream on success', function () {
+            var stream = sinon.createStubInstance(Stream);
+            this.fs.open.withArgs('/my/path', 'w+').yields(null, 21);
+            this.streamFactory.create.withArgs('/my/path', 21).returns(stream);
+
+            return expect(this.fileSystem.open('/my/path')).to.eventually.equal(stream);
+        });
+
+        it('should be rejected with the error from the fs module on failure', function () {
+            var error = new Error('That file cannot be accessed');
+            this.fs.open.withArgs('/my/path', 'w+').yields(error);
+
+            return expect(this.fileSystem.open('/my/path')).to.eventually.be.rejectedWith(error);
+        });
+    });
+
+    describe('openSync()', function () {
+        it('should return the created Stream on success', function () {
+            var stream = sinon.createStubInstance(Stream);
+            this.fs.openSync.withArgs('/my/path', 'w+').returns(101);
+            this.streamFactory.create.withArgs('/my/path', 101).returns(stream);
+
+            expect(this.fileSystem.openSync('/my/path')).to.equal(stream);
+        });
+    });
+
     describe('realPath()', function () {
         it('should return the result from realpath', function () {
             this.fs.realpathSync.returns('/my/resolved/real/path');
@@ -111,6 +145,30 @@ describe('FileSystem', function () {
 
             expect(this.fs.realpathSync).to.have.been.calledOnce;
             expect(this.fs.realpathSync).to.have.been.calledWith('/my/base/my/relative/path');
+        });
+    });
+
+    describe('unlink()', function () {
+        it('should be resolved on success', function () {
+            this.fs.unlink.withArgs('/my/path').yields(null);
+
+            return expect(this.fileSystem.unlink('/my/path')).to.eventually.be.resolved;
+        });
+
+        it('should be rejected with the error from the fs module on failure', function () {
+            var error = new Error('That file cannot be accessed');
+            this.fs.unlink.withArgs('/my/path').yields(error);
+
+            return expect(this.fileSystem.unlink('/my/path')).to.eventually.be.rejectedWith(error);
+        });
+    });
+
+    describe('unlinkSync()', function () {
+        it('should unlink the file', function () {
+            this.fileSystem.unlinkSync('/my/path');
+
+            expect(this.fs.unlinkSync).to.have.been.calledOnce;
+            expect(this.fs.unlinkSync).to.have.been.calledWith('/my/path');
         });
     });
 });

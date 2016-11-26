@@ -10,12 +10,15 @@
 'use strict';
 
 var expect = require('chai').expect,
+    microtime = require('microtime'),
     sinon = require('sinon'),
     DotPHP = require('../../src/DotPHP'),
+    Evaluator = require('../../src/Evaluator'),
     FileSystem = require('../../src/FileSystem'),
     FileSystemFactory = require('../../src/FileSystemFactory'),
     IncluderFactory = require('../../src/IncluderFactory'),
     IO = require('../../src/IO'),
+    Performance = require('../../src/Performance'),
     RequireExtension = require('../../src/RequireExtension'),
     Requirer = require('../../src/Requirer'),
     Transpiler = require('../../src/Transpiler'),
@@ -27,7 +30,7 @@ describe('Module require integration', function () {
     beforeEach(function () {
         this.fs = {
             readFileSync: sinon.stub(),
-            realpathSync: sinon.stub()
+            realpathSync: sinon.stub().returnsArg(0)
         };
 
         this.module = {
@@ -48,21 +51,26 @@ describe('Module require integration', function () {
         this.require.withArgs('phpruntime/sync').returns(phpRuntime);
 
         this.transpiler = new Transpiler(
-            phpToAST.create(),
+            phpToAST.create(null, {captureAllOffsets: true}),
             phpToJS,
             this.require
         );
-        this.requirer = new Requirer(
-            this.fs,
+        this.evaluator = new Evaluator(
             this.transpiler,
             new IO(this.process),
             new FileSystemFactory(FileSystem, this.fs),
-            new IncluderFactory(this.fs, this.transpiler)
+            new IncluderFactory(this.fs, this.transpiler),
+            new Performance(microtime)
+        );
+        this.requirer = new Requirer(
+            this.fs,
+            this.evaluator
         );
 
         this.dotPHP = new DotPHP(
             new RequireExtension(this.requirer, this.require),
-            this.requirer
+            this.requirer,
+            this.evaluator
         );
     });
 

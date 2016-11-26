@@ -74,6 +74,20 @@ describe('Transpiler', function () {
             );
         });
 
+        it('should transpile the AST with the source content for the source map', function () {
+            this.transpiler.transpile('<?php return 21;', '/my/module.php');
+
+            expect(this.phpToJS.transpile).to.have.been.calledOnce;
+            expect(this.phpToJS.transpile).to.have.been.calledWith(
+                sinon.match.any,
+                sinon.match({
+                    sourceMap: {
+                        sourceContent: '<?php return 21;'
+                    }
+                })
+            );
+        });
+
         it('should return the modified compiled module', function () {
             expect(this.transpiler.transpile('<?php return 21;', '/my/module.php'))
                 .to.equal(this.modifiedCompiledModule);
