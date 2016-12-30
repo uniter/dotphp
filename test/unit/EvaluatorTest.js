@@ -11,109 +11,53 @@
 
 var expect = require('chai').expect,
     sinon = require('sinon'),
+    Compiler = require('../../src/Compiler'),
     Evaluator = require('../../src/Evaluator'),
-    FileSystem = require('../../src/FileSystem'),
-    FileSystemFactory = require('../../src/FileSystemFactory'),
-    IncluderFactory = require('../../src/IncluderFactory'),
-    IO = require('../../src/IO'),
-    Performance = require('../../src/Performance'),
+    Mode = require('../../src/Mode'),
     Transpiler = require('../../src/Transpiler');
 
 describe('Evaluator', function () {
     beforeEach(function () {
         this.compiledModule = sinon.stub();
-        this.fileSystem = sinon.createStubInstance(FileSystem);
-        this.fileSystemFactory = sinon.createStubInstance(FileSystemFactory);
-        this.includer = sinon.stub();
-        this.includerFactory = sinon.createStubInstance(IncluderFactory);
-        this.io = sinon.createStubInstance(IO);
-        this.performance = sinon.createStubInstance(Performance);
+        this.compiler = sinon.createStubInstance(Compiler);
+        this.mode = sinon.createStubInstance(Mode);
+        this.result = {};
         this.phpEngine = {
-            execute: sinon.stub()
+            execute: sinon.stub().returns(this.result)
         };
         this.transpiler = sinon.createStubInstance(Transpiler);
 
+        this.compiler.compile.returns(this.compiledModule);
         this.compiledModule.returns(this.phpEngine);
-        this.fileSystemFactory.create.returns(this.fileSystem);
-        this.includerFactory.create.returns(this.includer);
-        this.transpiler.transpile.returns(this.compiledModule);
 
-        this.evaluator = new Evaluator(
-            this.transpiler,
-            this.io,
-            this.fileSystemFactory,
-            this.includerFactory,
-            this.performance
-        );
+        this.evaluator = new Evaluator(this.compiler);
     });
 
-    describe('require()', function () {
-        it('should create the FileSystem with the correct directory path', function () {
-            this.evaluator.evaluate('<?php print "my program";', '/my/path/to/module.php');
+    describe('evaluate()', function () {
+        it('should compile the code with its file path', function () {
+            this.evaluator.evaluate('<?php print "my program";', '/my/module.php', this.mode);
 
-            expect(this.fileSystemFactory.create).to.have.been.calledOnce;
-            expect(this.fileSystemFactory.create).to.have.been.calledWith('/my/path/to');
+            expect(this.compiler.compile).to.have.been.calledOnce;
+            expect(this.compiler.compile).to.have.been.calledWith(
+                '<?php print "my program";',
+                '/my/module.php'
+            );
         });
 
-        it('should transpile the correct code', function () {
-            this.evaluator.evaluate('<?php print "my program";', '/my/awesome-module.php');
+        it('should pass the mode through when compiling the code', function () {
+            this.evaluator.evaluate('<?php print "my program";', '/my/module.php', this.mode);
 
-            expect(this.transpiler.transpile).to.have.been.calledOnce;
-            expect(this.transpiler.transpile).to.have.been.calledWith('<?php print "my program";');
-        });
-
-        it('should transpile the code with the correct file name', function () {
-            this.evaluator.evaluate('<?php print "my program";', '/my/awesome-module.php');
-
-            expect(this.transpiler.transpile).to.have.been.calledOnce;
-            expect(this.transpiler.transpile).to.have.been.calledWith(sinon.match.any, 'awesome-module.php');
-        });
-
-        it('should pass the created FileSystem when creating the includer', function () {
-            this.evaluator.evaluate('<?php print "my program";', '/my/awesome-module.php');
-
-            expect(this.includerFactory.create).to.have.been.calledOnce;
-            expect(this.includerFactory.create).to.have.been.calledWith(sinon.match.same(this.fileSystem));
-        });
-
-        it('should compile the module with the created FileSystem', function () {
-            this.evaluator.evaluate('<?php print "my program";', '/my/module.php');
-
-            expect(this.compiledModule).to.have.been.calledOnce;
-            expect(this.compiledModule).to.have.been.calledWith(sinon.match({
-                fileSystem: sinon.match.same(this.fileSystem)
-            }));
-        });
-
-        it('should compile the module with the created includer', function () {
-            this.evaluator.evaluate('<?php print "my program";', '/my/module.php');
-
-            expect(this.compiledModule).to.have.been.calledOnce;
-            expect(this.compiledModule).to.have.been.calledWith(sinon.match({
-                include: sinon.match.same(this.includer)
-            }));
-        });
-
-        it('should compile the module with the Performance handler', function () {
-            this.evaluator.evaluate('<?php print "my program";', '/my/module.php');
-
-            expect(this.compiledModule).to.have.been.calledOnce;
-            expect(this.compiledModule).to.have.been.calledWith(sinon.match({
-                performance: sinon.match.same(this.performance)
-            }));
-        });
-
-        it('should install the IO for the compiled PHP module', function () {
-            this.evaluator.evaluate('<?php print "my program";', '/my/module.php');
-
-            expect(this.io.install).to.have.been.calledOnce;
-            expect(this.io.install).to.have.been.calledWith(sinon.match.same(this.phpEngine));
+            expect(this.compiler.compile).to.have.been.calledOnce;
+            expect(this.compiler.compile).to.have.been.calledWith(
+                sinon.match.any,
+                sinon.match.any,
+                sinon.match.same(this.mode)
+            );
         });
 
         it('should return the result from executing the module', function () {
-            this.phpEngine.execute.returns(21);
-
-            expect(this.evaluator.evaluate('<?php print "my program";', '/my/module.php')).to.equal(21);
+            expect(this.evaluator.evaluate('<?php print "my program";', '/my/module.php', this.mode))
+                .to.equal(this.result);
         });
     });
 });

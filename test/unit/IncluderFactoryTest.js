@@ -11,16 +11,19 @@
 
 var expect = require('chai').expect,
     sinon = require('sinon'),
+    Compiler = require('../../src/Compiler'),
     FileSystem = require('../../src/FileSystem'),
     IncluderFactory = require('../../src/IncluderFactory'),
-    Transpiler = require('../../src/Transpiler');
+    Mode = require('../../src/Mode');
 
 describe('IncluderFactory', function () {
     beforeEach(function () {
+        this.compiler = sinon.createStubInstance(Compiler);
         this.fileSystem = sinon.createStubInstance(FileSystem);
         this.fs = {
             readFileSync: sinon.stub().returns({toString: sinon.stub().returns('/* My original PHP */')})
         };
+        this.mode = sinon.createStubInstance(Mode);
         this.moduleFactory = sinon.stub();
         this.resolve = sinon.stub();
         this.reject = sinon.stub();
@@ -28,18 +31,17 @@ describe('IncluderFactory', function () {
             resolve: this.resolve,
             reject: this.reject
         };
-        this.transpiler = sinon.createStubInstance(Transpiler);
 
         this.fileSystem.realPath.returns('/my/real/path.php');
-        this.transpiler.transpile.returns(this.moduleFactory);
+        this.compiler.compile.returns(this.moduleFactory);
 
-        this.includerFactory = new IncluderFactory(this.fs, this.transpiler);
+        this.includerFactory = new IncluderFactory(this.fs);
     });
 
     describe('create()', function () {
         beforeEach(function () {
             this.callCreate = function () {
-                this.includer = this.includerFactory.create(this.fileSystem);
+                this.includer = this.includerFactory.create(this.compiler, this.fileSystem, this.mode);
             }.bind(this);
         });
 
@@ -60,13 +62,13 @@ describe('IncluderFactory', function () {
                 expect(this.fs.readFileSync).to.have.been.calledWith('/the/real/module/path.php');
             });
 
-            it('should transpile the module\'s code correctly', function () {
+            it('should compile the module\'s code correctly', function () {
                 this.callCreate();
 
                 this.includer('/my/module.php', this.promise);
 
-                expect(this.transpiler.transpile).to.have.been.calledOnce;
-                expect(this.transpiler.transpile).to.have.been.calledWith(
+                expect(this.compiler.compile).to.have.been.calledOnce;
+                expect(this.compiler.compile).to.have.been.calledWith(
                     '/* My original PHP */',
                     '/my/real/path.php'
                 );
@@ -84,7 +86,7 @@ describe('IncluderFactory', function () {
                 );
             });
 
-            it('should resolve the promise with the module factory from the transpiler', function () {
+            it('should resolve the promise with the module factory from the compiler', function () {
                 this.callCreate();
 
                 this.includer('/my/module.php', this.promise);

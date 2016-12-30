@@ -16,10 +16,12 @@ var binaryName = require('path').basename(process.argv[1]).replace(/\.js$/, ''),
     hasOwn = {}.hasOwnProperty,
     parsedOptions = require('minimist')(process.argv.slice(2), {
         '--': false,
-        'string': ['help', 'dump-ast', 'f', 'r', 'run'],
+        'string': ['help', 'dump-ast', 'f', 'r', 'run', 't', 'transpile-only', 'u'],
         'alias': {
             'f': 'file',
-            'r': 'run'
+            'r': 'run',
+            't': 'transpile-only',
+            'u': 'dump-ast'
         },
         'unknown': function (option) {
             if (/^--?/.test(option)) {
@@ -45,8 +47,9 @@ if (phpCode === null) {
     console.log([
         'Usage: ' + binaryName + ' <options> <path to PHP file>',
         '',
-        '  -d / --dump-ast   - Dump AST of PHP code instead of executing it',
-        '  -r / --run=<code> - Run PHP <code> without using script tags <? ... ?>'
+        '  -u / --dump-ast       - Dump AST of PHP code instead of executing it',
+        '  -t / --transpile-only - Dump transpiled JS of PHP code instead of executing it',
+        '  -r / --run=<code>     - Run PHP <code> without using script tags <? ... ?>'
     ].join('\n'));
 
     process.exit(1);
@@ -60,4 +63,19 @@ if (hasOwn.call(parsedOptions, 'dump-ast')) {
     return;
 }
 
-dotPHP.evaluate(phpCode, path);
+// Only dump the transpiled JS to stdout if requested
+if (hasOwn.call(parsedOptions, 'transpile-only')) {
+    process.stdout.write(dotPHP.transpile(phpCode, path));
+    return;
+}
+
+dotPHP.evaluate(phpCode, path).then(function (resultValue) {
+    if (resultValue.getType() === 'exit') {
+        // Don't explicitly exit with `process.exit(...)`, as there may be other I/O events to complete
+        // `process.exitCode` will be respected if `.exit(...)` is not called or is called with no argument
+        process.exitCode = resultValue.getStatus();
+        return;
+    }
+
+    // PHP program did not explicitly exit, nothing to do
+});

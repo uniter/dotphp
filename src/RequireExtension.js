@@ -9,7 +9,8 @@
 
 'use strict';
 
-var _ = require('microdash');
+var _ = require('microdash'),
+    Mode = require('./Mode');
 
 /**
  * @param {Requirer} requirer
@@ -35,7 +36,7 @@ _.extend(RequireExtension.prototype, {
         var extension = this;
 
         extension.require.extensions['.php'] = function (module, filePath) {
-            module.exports = extension.requirer.require(filePath);
+            module.exports = extension.requirer.require(filePath, Mode.asynchronous());
         };
     }
 });

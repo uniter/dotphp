@@ -13,14 +13,14 @@ var _ = require('microdash');
 
 /**
  * @param {fs} FS module
- * @param {Evaluator} evaluator
+ * @param {Compiler} compiler
  * @constructor
  */
-function Requirer(fs, evaluator) {
+function Requirer(fs, compiler) {
     /**
-     * @type {Evaluator}
+     * @type {Compiler}
      */
-    this.evaluator = evaluator;
+    this.compiler = compiler;
     /**
      * @type {fs}
      */
@@ -32,13 +32,14 @@ _.extend(Requirer.prototype, {
      * Requires, executes and returns the result of the specified PHP file
      *
      * @param {string} filePath
-     * @return {Promise|Value}
+     * @param {Mode} mode
+     * @return {Function}
      */
-    require: function (filePath) {
+    require: function (filePath, mode) {
         var requirer = this,
             phpCode = requirer.fs.readFileSync(filePath).toString();
 
-        return requirer.evaluator.evaluate(phpCode, filePath);
+        return requirer.compiler.compile(phpCode, filePath, mode);
     }
 });
 

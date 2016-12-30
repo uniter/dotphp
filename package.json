@@ -26,6 +26,7 @@
     "test": "npm run jshint && npm run mocha"
   },
   "dependencies": {
+    "js-beautify": "^1.6.4",
     "lie": "^3.0.1",
     "microdash": "~1",
     "microtime": "^2.1.1",

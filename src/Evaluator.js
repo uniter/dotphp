@@ -9,38 +9,17 @@
 
 'use strict';
 
-var _ = require('microdash'),
-    path = require('path');
+var _ = require('microdash');
 
 /**
- * @param {Transpiler} transpiler
- * @param {IO} io
- * @param {FileSystemFactory} fileSystemFactory
- * @param {IncluderFactory} includerFactory
- * @param {Performance} performance
+ * @param {Compiler} compiler
  * @constructor
  */
-function Evaluator(transpiler, io, fileSystemFactory, includerFactory, performance) {
+function Evaluator(compiler) {
     /**
-     * @type {FileSystemFactory}
+     * @type {Compiler}
      */
-    this.fileSystemFactory = fileSystemFactory;
-    /**
-     * @type {IncluderFactory}
-     */
-    this.includerFactory = includerFactory;
-    /**
-     * @type {IO}
-     */
-    this.io = io;
-    /**
-     * @type {Performance}
-     */
-    this.performance = performance;
-    /**
-     * @type {Transpiler}
-     */
-    this.transpiler = transpiler;
+    this.compiler = compiler;
 }
 
 _.extend(Evaluator.prototype, {
@@ -49,26 +28,18 @@ _.extend(Evaluator.prototype, {
      *
      * @param {string} phpCode PHP file's source code as a string
      * @param {string} filePath Absolute path to the file being evaluated
+     * @param {Mode} mode
      * @return {Promise|Value}
      */
-    evaluate: function (phpCode, filePath) {
+    evaluate: function (phpCode, filePath, mode) {
         var evaluator = this,
-            directoryPath = path.dirname(filePath),
-            fileName = path.basename(filePath),
-            fileSystem = evaluator.fileSystemFactory.create(directoryPath),
-            compiledModule = evaluator.transpiler.transpile(phpCode, fileName),
-            phpEngine = compiledModule({
-                fileSystem: fileSystem,
-                include: evaluator.includerFactory.create(fileSystem),
-                performance: evaluator.performance
-            }),
-            resultValue;
+            compiledModule = evaluator.compiler.compile(phpCode, filePath, mode),
+            phpEngine = compiledModule(),
+            resultValueOrPromise;
 
-        evaluator.io.install(phpEngine);
+        resultValueOrPromise = phpEngine.execute();
 
-        resultValue = phpEngine.execute();
-
-        return resultValue;
+        return resultValueOrPromise;
     }
 });
 

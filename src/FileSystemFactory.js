@@ -36,14 +36,14 @@ _.extend(FileSystemFactory.prototype, {
     /**
      * Creates a new FileSystem
      *
-     * @param {string} basePath
+     * @param {string} cwdPath
      * @return {FileSystem}
      */
-    create: function (basePath) {
+    create: function (cwdPath) {
         var factory = this,
-            absoluteBasePath = factory.fs.realpathSync(basePath);
+            absoluteCWDPath = factory.fs.realpathSync(cwdPath);
 
-        return new factory.FileSystem(factory.fs, factory.streamFactory, absoluteBasePath);
+        return new factory.FileSystem(factory.fs, factory.streamFactory, absoluteCWDPath);
     }
 });
 

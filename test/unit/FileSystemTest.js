@@ -31,7 +31,7 @@ describe('FileSystem', function () {
         };
         this.streamFactory = sinon.createStubInstance(StreamFactory);
 
-        this.fileSystem = new FileSystem(this.fs, this.streamFactory, '/my/base/path');
+        this.fileSystem = new FileSystem(this.fs, this.streamFactory, '/my/cwd/path');
     });
 
     describe('isDirectory()', function () {
@@ -93,27 +93,35 @@ describe('FileSystem', function () {
     });
 
     describe('open()', function () {
+        beforeEach(function () {
+            this.fs.realpathSync.withArgs('/my/path').returns('/my/resolved/real/path');
+        });
+
         it('should be resolved with the created Stream on success', function () {
             var stream = sinon.createStubInstance(Stream);
-            this.fs.open.withArgs('/my/path', 'w+').yields(null, 21);
-            this.streamFactory.create.withArgs('/my/path', 21).returns(stream);
+            this.fs.open.withArgs('/my/resolved/real/path', 'w+').yields(null, 21);
+            this.streamFactory.create.withArgs('/my/resolved/real/path', 21).returns(stream);
 
             return expect(this.fileSystem.open('/my/path')).to.eventually.equal(stream);
         });
 
         it('should be rejected with the error from the fs module on failure', function () {
             var error = new Error('That file cannot be accessed');
-            this.fs.open.withArgs('/my/path', 'w+').yields(error);
+            this.fs.open.withArgs('/my/resolved/real/path', 'w+').yields(error);
 
             return expect(this.fileSystem.open('/my/path')).to.eventually.be.rejectedWith(error);
         });
     });
 
     describe('openSync()', function () {
+        beforeEach(function () {
+            this.fs.realpathSync.withArgs('/my/path').returns('/my/resolved/real/path');
+        });
+
         it('should return the created Stream on success', function () {
             var stream = sinon.createStubInstance(Stream);
-            this.fs.openSync.withArgs('/my/path', 'w+').returns(101);
-            this.streamFactory.create.withArgs('/my/path', 101).returns(stream);
+            this.fs.openSync.withArgs('/my/resolved/real/path', 'w+').returns(101);
+            this.streamFactory.create.withArgs('/my/resolved/real/path', 101).returns(stream);
 
             expect(this.fileSystem.openSync('/my/path')).to.equal(stream);
         });
@@ -133,42 +141,50 @@ describe('FileSystem', function () {
             expect(this.fs.realpathSync).to.have.been.calledWith('/my/absolute/path');
         });
 
-        it('should resolve relative same-dir (dot)-prefixed paths relative to the base path', function () {
+        it('should resolve relative same-dir (dot)-prefixed paths relative to the cwd path', function () {
             this.fileSystem.realPath('./my/relative/path');
 
             expect(this.fs.realpathSync).to.have.been.calledOnce;
-            expect(this.fs.realpathSync).to.have.been.calledWith('/my/base/path/my/relative/path');
+            expect(this.fs.realpathSync).to.have.been.calledWith('/my/cwd/path/my/relative/path');
         });
 
-        it('should resolve relative parent-dir (2-dot)-prefixed paths relative to the parent of the base path', function () {
+        it('should resolve relative parent-dir (2-dot)-prefixed paths relative to the parent of the cwd path', function () {
             this.fileSystem.realPath('../my/relative/path');
 
             expect(this.fs.realpathSync).to.have.been.calledOnce;
-            expect(this.fs.realpathSync).to.have.been.calledWith('/my/base/my/relative/path');
+            expect(this.fs.realpathSync).to.have.been.calledWith('/my/cwd/my/relative/path');
         });
     });
 
     describe('unlink()', function () {
+        beforeEach(function () {
+            this.fs.realpathSync.withArgs('/my/path').returns('/my/resolved/real/path');
+        });
+
         it('should be resolved on success', function () {
-            this.fs.unlink.withArgs('/my/path').yields(null);
+            this.fs.unlink.withArgs('/my/resolved/real/path').yields(null);
 
             return expect(this.fileSystem.unlink('/my/path')).to.eventually.be.resolved;
         });
 
         it('should be rejected with the error from the fs module on failure', function () {
             var error = new Error('That file cannot be accessed');
-            this.fs.unlink.withArgs('/my/path').yields(error);
+            this.fs.unlink.withArgs('/my/resolved/real/path').yields(error);
 
             return expect(this.fileSystem.unlink('/my/path')).to.eventually.be.rejectedWith(error);
         });
     });
 
     describe('unlinkSync()', function () {
+        beforeEach(function () {
+            this.fs.realpathSync.withArgs('/my/path').returns('/my/resolved/real/path');
+        });
+
         it('should unlink the file', function () {
             this.fileSystem.unlinkSync('/my/path');
 
             expect(this.fs.unlinkSync).to.have.been.calledOnce;
-            expect(this.fs.unlinkSync).to.have.been.calledWith('/my/path');
+            expect(this.fs.unlinkSync).to.have.been.calledWith('/my/resolved/real/path');
         });
     });
 });

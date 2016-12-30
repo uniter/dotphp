@@ -9,19 +9,26 @@
 
 'use strict';
 
-var _ = require('microdash');
+var _ = require('microdash'),
+    Mode = require('./Mode');
 
 /**
  * @param {RequireExtension} requireExtension
  * @param {Requirer} requirer
  * @param {Evaluator} evaluator
+ * @param {Transpiler} transpiler
+ * @param {Function} jsBeautify Beautify NPM package
  * @constructor
  */
-function DotPHP(requireExtension, requirer, evaluator) {
+function DotPHP(requireExtension, requirer, evaluator, transpiler, jsBeautify) {
     /**
      * @type {Evaluator}
      */
     this.evaluator = evaluator;
+    /**
+     * @type {Function}
+     */
+    this.jsBeautify = jsBeautify;
     /**
      * @type {RequireExtension}
      */
@@ -30,18 +37,33 @@ function DotPHP(requireExtension, requirer, evaluator) {
      * @type {Requirer}
      */
     this.requirer = requirer;
+    /**
+     * @type {Transpiler}
+     */
+    this.transpiler = transpiler;
 }
 
 _.extend(DotPHP.prototype, {
     /**
-     * Executes and returns the result of the specified PHP code
+     * Executes and returns the result of the specified PHP code asynchronously
      *
      * @param {string} phpCode
      * @param {string} filePath
-     * @returns {Promise|Value}
+     * @returns {Promise}
      */
     evaluate: function (phpCode, filePath) {
-        return this.evaluator.evaluate(phpCode, filePath);
+        return this.evaluator.evaluate(phpCode, filePath, Mode.asynchronous());
+    },
+
+    /**
+     * Executes and returns the result of the specified PHP code synchronously
+     *
+     * @param {string} phpCode
+     * @param {string} filePath
+     * @returns {Value}
+     */
+    evaluateSync: function (phpCode, filePath) {
+        return this.evaluator.evaluate(phpCode, filePath, Mode.synchronous());
     },
 
     /**
@@ -52,13 +74,37 @@ _.extend(DotPHP.prototype, {
     },
 
     /**
-     * Fetches a PHP module from its full/real path
+     * Fetches a PHP module from its full/real path in asynchronous mode
      *
      * @param {string} path
-     * @returns {Value}
+     * @returns {Promise|Value}
      */
     require: function (path) {
-        return this.requirer.require(path);
+        return this.requirer.require(path, Mode.asynchronous());
+    },
+
+    /**
+     * Fetches a PHP module from its full/real path in synchronous mode
+     *
+     * @param {string} path
+     * @returns {Promise|Value}
+     */
+    requireSync: function (path) {
+        return this.requirer.require(path, Mode.synchronous());
+    },
+
+    /**
+     * Transpiles the specified PHP code to JavaScript
+     *
+     * @param {string} phpCode
+     * @param {string|null} filePath
+     * @returns {string}
+     */
+    transpile: function (phpCode, filePath) {
+        var dotPHP = this,
+            js = dotPHP.transpiler.transpile(phpCode, filePath, Mode.asynchronous());
+
+        return dotPHP.jsBeautify(js, {indent_size: 2});
     }
 });
 

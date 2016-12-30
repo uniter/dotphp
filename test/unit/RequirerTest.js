@@ -11,48 +11,65 @@
 
 var expect = require('chai').expect,
     sinon = require('sinon'),
-    Evaluator = require('../../src/Evaluator'),
+    Compiler = require('../../src/Compiler'),
+    Mode = require('../../src/Mode'),
     Requirer = require('../../src/Requirer');
 
 describe('Requirer', function () {
     beforeEach(function () {
-        this.evaluator = sinon.createStubInstance(Evaluator);
+        this.compiler = sinon.createStubInstance(Compiler);
         this.file = {
             toString: sinon.stub()
         };
         this.fs = {
             readFileSync: sinon.stub().withArgs('/my/module.php').returns(this.file)
         };
+        this.mode = sinon.createStubInstance(Mode);
 
         this.requirer = new Requirer(
             this.fs,
-            this.evaluator
+            this.compiler
         );
     });
 
     describe('require()', function () {
-        it('should evaluate the source of the file', function () {
+        it('should compile the source of the file', function () {
             this.file.toString.returns('<?php print 21;');
 
-            this.requirer.require('/my/module.php');
+            this.requirer.require('/my/module.php', this.mode);
 
-            expect(this.evaluator.evaluate).to.have.been.calledOnce;
-            expect(this.evaluator.evaluate).to.have.been.calledWith('<?php print 21;');
+            expect(this.compiler.compile).to.have.been.calledOnce;
+            expect(this.compiler.compile).to.have.been.calledWith('<?php print 21;');
         });
 
-        it('should pass the file path to the Evaluator', function () {
+        it('should pass the file path to the Compiler', function () {
             this.file.toString.returns('<?php print 21;');
 
-            this.requirer.require('/my/module.php');
+            this.requirer.require('/my/module.php', this.mode);
 
-            expect(this.evaluator.evaluate).to.have.been.calledOnce;
-            expect(this.evaluator.evaluate).to.have.been.calledWith(sinon.match.any, '/my/module.php');
+            expect(this.compiler.compile).to.have.been.calledOnce;
+            expect(this.compiler.compile).to.have.been.calledWith(sinon.match.any, '/my/module.php');
         });
 
-        it('should return the result from the Evaluator', function () {
-            this.evaluator.evaluate.returns(21);
+        it('should pass the Mode through to the Compiler', function () {
+            this.file.toString.returns('<?php print 21;');
 
-            expect(this.requirer.require('/my/module.php')).to.equal(21);
+            this.requirer.require('/my/module.php', this.mode);
+
+            expect(this.compiler.compile).to.have.been.calledOnce;
+            expect(this.compiler.compile).to.have.been.calledWith(
+                sinon.match.any,
+                sinon.match.any,
+                sinon.match.same(this.mode)
+            );
+        });
+
+        it('should return the mode factory from the Compiler', function () {
+            var moduleFactory = sinon.stub();
+
+            this.compiler.compile.returns(moduleFactory);
+
+            expect(this.requirer.require('/my/module.php', this.mode)).to.equal(moduleFactory);
         });
     });
 });

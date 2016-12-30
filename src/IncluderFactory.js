@@ -13,28 +13,25 @@ var _ = require('microdash');
 
 /**
  * @param {fs} fs
- * @param {Transpiler} transpiler
  * @constructor
  */
-function IncluderFactory(fs, transpiler) {
+function IncluderFactory(fs) {
     /**
      * @type {fs}
      */
     this.fs = fs;
-    /**
-     * @type {Transpiler}
-     */
-    this.transpiler = transpiler;
 }
 
 _.extend(IncluderFactory.prototype, {
     /**
      * Creates an includer function for Uniter to use when including other PHP modules
      *
+     * @param {Compiler} compiler
      * @param {FileSystem} fileSystem
+     * @param {Mode} mode
      * @returns {function}
      */
-    create: function (fileSystem) {
+    create: function (compiler, fileSystem, mode) {
         var factory = this;
 
         /**
@@ -55,7 +52,7 @@ _.extend(IncluderFactory.prototype, {
                 return;
             }
 
-            moduleFactory = factory.transpiler.transpile(phpCode, realPath);
+            moduleFactory = compiler.compile(phpCode, realPath, mode);
 
             promise.resolve(moduleFactory);
         }

@@ -14,18 +14,18 @@ var _ = require('microdash'),
     Promise = require('lie');
 
 /**
- * Virtual FileSystem for use in the browser with compiled PHP modules
+ * Abstraction layer around Node's FS module for PHP programs to use
  *
  * @param {fs} fs
  * @param {StreamFactory} streamFactory
- * @param {string} basePath
+ * @param {string} cwdPath
  * @constructor
  */
-function FileSystem(fs, streamFactory, basePath) {
+function FileSystem(fs, streamFactory, cwdPath) {
     /**
      * @type {string}
      */
-    this.basePath = basePath;
+    this.cwdPath = cwdPath;
     /**
      * @type {fs}
      */
@@ -80,15 +80,16 @@ _.extend(FileSystem.prototype, {
      * @returns {Promise} Resolves with a Stream for the file on success, rejects on failure
      */
     open: function (filePath) {
-        var fileSystem = this;
+        var fileSystem = this,
+            realPath = fileSystem.realPath(filePath);
 
         return new Promise(function (resolve, reject) {
-            fileSystem.fs.open(filePath, 'w+', function (error, fd) {
+            fileSystem.fs.open(realPath, 'w+', function (error, fd) {
                 if (error) {
                     return reject(error);
                 }
 
-                resolve(fileSystem.streamFactory.create(filePath, fd));
+                resolve(fileSystem.streamFactory.create(realPath, fd));
             });
         });
     },
@@ -101,9 +102,10 @@ _.extend(FileSystem.prototype, {
      */
     openSync: function (filePath) {
         var fileSystem = this,
-            fd = fileSystem.fs.openSync(filePath, 'w+');
+            realPath = fileSystem.realPath(filePath),
+            fd = fileSystem.fs.openSync(realPath, 'w+');
 
-        return fileSystem.streamFactory.create(filePath, fd);
+        return fileSystem.streamFactory.create(realPath, fd);
     },
 
     /**
@@ -115,7 +117,7 @@ _.extend(FileSystem.prototype, {
      */
     realPath: function (filePath) {
         var fileSystem = this,
-            relativePath = path.resolve(fileSystem.basePath, filePath);
+            relativePath = path.resolve(fileSystem.cwdPath, filePath);
 
         try {
             return fileSystem.fs.realpathSync(relativePath);
@@ -131,10 +133,11 @@ _.extend(FileSystem.prototype, {
      * @returns {Promise} Resolves on success, rejects on failure
      */
     unlink: function (filePath) {
-        var fileSystem = this;
+        var fileSystem = this,
+            realPath = fileSystem.realPath(filePath);
 
         return new Promise(function (resolve, reject) {
-            fileSystem.fs.unlink(filePath, function (error) {
+            fileSystem.fs.unlink(realPath, function (error) {
                 if (error) {
                     return reject(error);
                 }
@@ -150,9 +153,10 @@ _.extend(FileSystem.prototype, {
      * @param {string} filePath
      */
     unlinkSync: function (filePath) {
-        var fileSystem = this;
+        var fileSystem = this,
+            realPath = fileSystem.realPath(filePath);
 
-        fileSystem.fs.unlinkSync(filePath);
+        fileSystem.fs.unlinkSync(realPath);
     }
 });
 

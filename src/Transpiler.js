@@ -14,10 +14,9 @@ var _ = require('microdash');
 /**
  * @param {Parser} phpParser
  * @param {PHPToJS} phpToJS
- * @param {Function} require Node.js require(...) function to fetch the runtime via
  * @constructor
  */
-function Transpiler(phpParser, phpToJS, require) {
+function Transpiler(phpParser, phpToJS) {
     /**
      * @type {Parser}
      */
@@ -26,47 +25,37 @@ function Transpiler(phpParser, phpToJS, require) {
      * @type {PHPToJS}
      */
     this.phpToJS = phpToJS;
-    /**
-     * @type {Function}
-     */
-    this.require = require;
 }
 
 _.extend(Transpiler.prototype, {
     /**
-     * Transpiles a PHP code string read from a file and returns a module factory
+     * Transpiles a PHP code string read from a file and returns its JavaScript equivalent
      *
      * @param {string} phpCode
      * @param {string} filePath
-     * @returns {Function}
+     * @param {Mode} mode
+     * @returns {string}
      */
-    transpile: function (phpCode, filePath) {
-        var compiledModule,
-            phpAST,
-            transpiler = this,
-            transpiledCode;
+    transpile: function (phpCode, filePath, mode) {
+        var phpAST,
+            transpiler = this;
 
         // Tell the parser the path to the current file
         // so it can be included in error messages
         transpiler.phpParser.getState().setPath(filePath);
 
         phpAST = transpiler.phpParser.parse(phpCode);
-        transpiledCode = transpiler.phpToJS.transpile(
+
+        return transpiler.phpToJS.transpile(
             phpAST,
             {
                 path: filePath,
-                sync: true,
                 sourceMap: {
                     sourceContent: phpCode
-                }
+                },
+                sync: mode.isSynchronous()
             }
         );
-        /*jshint evil:true */
-        compiledModule = new Function('require', 'return ' + transpiledCode)(transpiler.require);
-
-        return compiledModule.using({
-            path: filePath
-        });
     }
 });
 
