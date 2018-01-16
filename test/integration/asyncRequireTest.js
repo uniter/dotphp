@@ -22,6 +22,8 @@ describe('DotPHP .require(...) integration - asynchronous module require', funct
         this.fs.readFileSync
             .withArgs('/real/path/to/my/module.php')
             .returns({toString: sinon.stub().returns('<?php $myVar = 21; return $myVar;')});
+        // Use a cwd that is different to the dir the module file is in to test cwd handling
+        this.process.cwd.returns('/some/other/path/as/cwd');
 
         return this.dotPHP.require('/real/path/to/my/module.php')().execute().then(function (result) {
             expect(result.getNative()).to.equal(21);
@@ -35,8 +37,10 @@ describe('DotPHP .require(...) integration - asynchronous module require', funct
             .returns({toString: sinon.stub().returns('<?php $myVar = require "../another.php"; return $myVar + 21;')});
         this.fs.realpathSync.withArgs('/real/path/to/another.php').returns('/real/path/to/another.php');
         this.fs.readFileSync
-            .withArgs('/real/path/to/another.php')
+            .withArgs('/my/real/another.php')
             .returns({toString: sinon.stub().returns('<?php $anotherVar = 1000; return $anotherVar;')});
+        // Set the cwd for the `../another.php` path above to be resolved against
+        this.process.cwd.returns('/my/real/cwd');
 
         return this.dotPHP.require('/real/path/to/my/module.php')().execute().then(function (result) {
             expect(result.getNative()).to.equal(1021);

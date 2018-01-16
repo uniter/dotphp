@@ -2,4 +2,4 @@
 
 require('../../register');
 
-require('./calculate_and_print.php');
+require('./calculate_and_print.php')().execute();

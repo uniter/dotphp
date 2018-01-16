@@ -30,7 +30,7 @@ JS file `my_entrypoint.js`:
 // Register the extension for requiring .php files
 require('dotphp/register');
 
-require('./my_module.php');
+require('./my_module.php')().execute();
 ```
 
 Requiring PHP files without hooking require(...)
@@ -48,7 +48,7 @@ print 'Hello from my_module!';
 
 JS file `my_entrypoint.js`:
 ```javascript
-require('dotphp').require('./my_module.php');
+require('dotphp').require('./my_module.php')().execute();
 ```
 
 Keeping up to date

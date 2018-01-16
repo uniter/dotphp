@@ -9,8 +9,7 @@
 
 'use strict';
 
-var _ = require('microdash'),
-    path = require('path');
+var _ = require('microdash');
 
 /**
  * @param {Transpiler} transpiler
@@ -53,7 +52,7 @@ _.extend(Compiler.prototype, {
      * Compiles a PHP code string read from a file and returns a module factory
      *
      * @param {string} transpiledCode
-     * @param {string} filePath
+     * @param {string|null} filePath
      * @param {Mode} mode
      * @returns {Function}
      */
@@ -62,15 +61,14 @@ _.extend(Compiler.prototype, {
         var compiler = this,
             transpiledCode = compiler.transpiler.transpile(phpCode, filePath, mode),
             compiledModule = new Function('require', 'return ' + transpiledCode)(compiler.require),
-            directoryPath = path.dirname(filePath),
-            fileSystem = compiler.fileSystemFactory.create(directoryPath),
+            fileSystem = compiler.fileSystemFactory.create(),
             configuredCompiledModule = compiledModule.using({
                 fileSystem: fileSystem,
                 include: compiler.includerFactory.create(compiler, fileSystem, mode),
                 path: filePath,
                 performance: compiler.performance
             }),
-            // Define a new module factory that will attach the standard IO to the environment
+            // Define a new module factory that will attach the standard IO to the environment if needed
             moduleFactory = function (options, environment, topLevelScope) {
                 var phpEngine = configuredCompiledModule(options, environment, topLevelScope);
 

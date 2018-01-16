@@ -20,26 +20,25 @@ describe('FileSystemFactory', function () {
             realpathSync: sinon.stub()
         };
         this.FileSystem = sinon.stub();
+        this.process = {};
         this.streamFactory = sinon.createStubInstance(StreamFactory);
 
-        this.factory = new FileSystemFactory(this.FileSystem, this.fs, this.streamFactory);
+        this.factory = new FileSystemFactory(this.FileSystem, this.fs, this.streamFactory, this.process);
     });
 
     describe('create()', function () {
         it('should return an instance of FileSystem', function () {
-            expect(this.factory.create('my/cwd/path')).to.be.an.instanceOf(this.FileSystem);
+            expect(this.factory.create()).to.be.an.instanceOf(this.FileSystem);
         });
 
         it('should create the FileSystem correctly', function () {
-            this.fs.realpathSync.withArgs('my/cwd/path').returns('/absolutely/my/cwd/path');
-
-            this.factory.create('my/cwd/path');
+            this.factory.create();
 
             expect(this.FileSystem).to.have.been.calledOnce;
             expect(this.FileSystem).to.have.been.calledWith(
                 sinon.match.same(this.fs),
                 sinon.match.same(this.streamFactory),
-                '/absolutely/my/cwd/path'
+                sinon.match.same(this.process)
             );
         });
     });

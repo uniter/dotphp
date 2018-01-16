@@ -27,7 +27,7 @@ _.extend(Evaluator.prototype, {
      * Executes and returns the result of the specified PHP file
      *
      * @param {string} phpCode PHP file's source code as a string
-     * @param {string} filePath Absolute path to the file being evaluated
+     * @param {string|null} filePath Absolute path to the file being evaluated
      * @param {Mode} mode
      * @return {Promise|Value}
      */

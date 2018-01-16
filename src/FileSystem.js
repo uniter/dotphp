@@ -18,18 +18,18 @@ var _ = require('microdash'),
  *
  * @param {fs} fs
  * @param {StreamFactory} streamFactory
- * @param {string} cwdPath
+ * @param {Process} process
  * @constructor
  */
-function FileSystem(fs, streamFactory, cwdPath) {
-    /**
-     * @type {string}
-     */
-    this.cwdPath = cwdPath;
+function FileSystem(fs, streamFactory, process) {
     /**
      * @type {fs}
      */
     this.fs = fs;
+    /**
+     * @type {Process}
+     */
+    this.process = process;
     /**
      * @type {StreamFactory}
      */
@@ -117,7 +117,7 @@ _.extend(FileSystem.prototype, {
      */
     realPath: function (filePath) {
         var fileSystem = this,
-            relativePath = path.resolve(fileSystem.cwdPath, filePath);
+            relativePath = path.resolve(fileSystem.process.cwd(), filePath);
 
         try {
             return fileSystem.fs.realpathSync(relativePath);

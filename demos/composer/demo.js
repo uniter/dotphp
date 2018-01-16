@@ -2,4 +2,4 @@
 
 require('../../register');
 
-require('./demo.php');
+require('./demo.php')().execute();

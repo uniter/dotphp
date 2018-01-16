@@ -13,6 +13,7 @@
 
 var binaryName = require('path').basename(process.argv[1]).replace(/\.js$/, ''),
     dotPHP = require('..'),
+    filePath = null,
     hasOwn = {}.hasOwnProperty,
     parsedOptions = require('minimist')(process.argv.slice(2), {
         '--': false,
@@ -31,7 +32,6 @@ var binaryName = require('path').basename(process.argv[1]).replace(/\.js$/, ''),
             return true;
         }
     }),
-    path = null,
     phpCode = null,
     phpParser,
     phpToAST = require('phptoast');
@@ -39,8 +39,8 @@ var binaryName = require('path').basename(process.argv[1]).replace(/\.js$/, ''),
 if (hasOwn.call(parsedOptions, 'run')) {
     phpCode = '<?php ' + parsedOptions.run;
 } else if (parsedOptions.file || parsedOptions._.length > 0) {
-    path = parsedOptions.file || parsedOptions._[0];
-    phpCode = require('fs').readFileSync(path).toString();
+    filePath = parsedOptions.file || parsedOptions._[0];
+    phpCode = require('fs').readFileSync(filePath).toString();
 }
 
 if (phpCode === null) {
@@ -65,11 +65,11 @@ if (hasOwn.call(parsedOptions, 'dump-ast')) {
 
 // Only dump the transpiled JS to stdout if requested
 if (hasOwn.call(parsedOptions, 'transpile-only')) {
-    process.stdout.write(dotPHP.transpile(phpCode, path));
+    process.stdout.write(dotPHP.transpile(phpCode, filePath));
     return;
 }
 
-dotPHP.evaluate(phpCode, path).then(function (resultValue) {
+dotPHP.evaluate(phpCode, filePath).then(function (resultValue) {
     if (resultValue.getType() === 'exit') {
         // Don't explicitly exit with `process.exit(...)`, as there may be other I/O events to complete
         // `process.exitCode` will be respected if `.exit(...)` is not called or is called with no argument
@@ -78,4 +78,7 @@ dotPHP.evaluate(phpCode, path).then(function (resultValue) {
     }
 
     // PHP program did not explicitly exit, nothing to do
+}, function (error) {
+    process.stderr.write(error.message);
+    process.stdout.write('\n');
 });

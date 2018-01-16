@@ -45,7 +45,7 @@ describe('RequireExtension', function () {
                 expect(this.requirer.require).to.have.been.calledWith('/my/file/path.php');
             });
 
-            it('should specify asynchronous operation', function () {
+            it('should specify asynchronous operation by default', function () {
                 this.extension.install();
 
                 this.require.extensions['.php'](this.module, '/my/file/path.php');
@@ -53,6 +53,16 @@ describe('RequireExtension', function () {
                 expect(this.requirer.require).to.have.been.calledOnce;
                 expect(this.requirer.require.args[0][1]).to.be.an.instanceOf(Mode);
                 expect(this.requirer.require.args[0][1].isSynchronous()).to.be.false;
+            });
+
+            it('should specify synchronous operation when specified as an option', function () {
+                this.extension.install({sync: true});
+
+                this.require.extensions['.php'](this.module, '/my/file/path.php');
+
+                expect(this.requirer.require).to.have.been.calledOnce;
+                expect(this.requirer.require.args[0][1]).to.be.an.instanceOf(Mode);
+                expect(this.requirer.require.args[0][1].isSynchronous()).to.be.true;
             });
 
             it('should set the result from the Requirer as module.exports', function () {

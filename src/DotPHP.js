@@ -48,7 +48,7 @@ _.extend(DotPHP.prototype, {
      * Executes and returns the result of the specified PHP code asynchronously
      *
      * @param {string} phpCode
-     * @param {string} filePath
+     * @param {string|null} filePath
      * @returns {Promise}
      */
     evaluate: function (phpCode, filePath) {
@@ -59,7 +59,7 @@ _.extend(DotPHP.prototype, {
      * Executes and returns the result of the specified PHP code synchronously
      *
      * @param {string} phpCode
-     * @param {string} filePath
+     * @param {string|null} filePath
      * @returns {Value}
      */
     evaluateSync: function (phpCode, filePath) {
@@ -68,29 +68,31 @@ _.extend(DotPHP.prototype, {
 
     /**
      * Registers the `.php` extension handler for Node
+     *
+     * @param {object} options
      */
-    register: function () {
-        this.requireExtension.install();
+    register: function (options) {
+        this.requireExtension.install(options);
     },
 
     /**
      * Fetches a PHP module from its full/real path in asynchronous mode
      *
-     * @param {string} path
+     * @param {string} filePath
      * @returns {Promise|Value}
      */
-    require: function (path) {
-        return this.requirer.require(path, Mode.asynchronous());
+    require: function (filePath) {
+        return this.requirer.require(filePath, Mode.asynchronous());
     },
 
     /**
      * Fetches a PHP module from its full/real path in synchronous mode
      *
-     * @param {string} path
+     * @param {string} filePath
      * @returns {Promise|Value}
      */
-    requireSync: function (path) {
-        return this.requirer.require(path, Mode.synchronous());
+    requireSync: function (filePath) {
+        return this.requirer.require(filePath, Mode.synchronous());
     },
 
     /**

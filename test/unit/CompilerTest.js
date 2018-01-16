@@ -76,7 +76,6 @@ describe('Compiler', function () {
             this.compiler.compile('<?php print "my program";', '/my/path/to/module.php', this.mode);
 
             expect(this.fileSystemFactory.create).to.have.been.calledOnce;
-            expect(this.fileSystemFactory.create).to.have.been.calledWith('/my/path/to');
         });
 
         it('should pass the Compiler when creating the includer', function () {

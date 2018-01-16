@@ -56,5 +56,75 @@ describe('IO', function () {
             expect(this.process.stderr.write).to.have.been.calledWith('Bang! Something went wrong');
             expect(this.process.stdout.write).not.to.have.been.called;
         });
+
+        it('should install a stdout listener onto each different one provided', function () {
+            var secondPhpStderr = new EventEmitter(),
+                secondPhpStdout = new EventEmitter(),
+                secondPhpEngine = {
+                    getStdout: sinon.stub().returns(secondPhpStdout),
+                    getStderr: sinon.stub().returns(secondPhpStderr)
+                };
+            this.io.install(this.phpEngine);
+            this.io.install(secondPhpEngine);
+
+            this.phpStdout.emit('data', 'first output');
+            secondPhpStdout.emit('data', 'second output');
+
+            expect(this.process.stdout.write).to.have.been.calledTwice;
+            expect(this.process.stdout.write).to.have.been.calledWith('first output');
+            expect(this.process.stdout.write).to.have.been.calledWith('second output');
+            expect(this.process.stderr.write).not.to.have.been.called;
+        });
+
+        it('should install a stderr listener onto each different one provided', function () {
+            var secondPhpStderr = new EventEmitter(),
+                secondPhpStdout = new EventEmitter(),
+                secondPhpEngine = {
+                    getStdout: sinon.stub().returns(secondPhpStdout),
+                    getStderr: sinon.stub().returns(secondPhpStderr)
+                };
+            this.io.install(this.phpEngine);
+            this.io.install(secondPhpEngine);
+
+            this.phpStderr.emit('data', 'first warning');
+            secondPhpStderr.emit('data', 'second warning');
+
+            expect(this.process.stderr.write).to.have.been.calledTwice;
+            expect(this.process.stderr.write).to.have.been.calledWith('first warning');
+            expect(this.process.stderr.write).to.have.been.calledWith('second warning');
+            expect(this.process.stdout.write).not.to.have.been.called;
+        });
+
+        it('should only install a stdout listener once per stream', function () {
+            var secondPhpEngine = {
+                    // Use the same stream objects to check the listeners are only registered once
+                    getStdout: sinon.stub().returns(this.phpStdout),
+                    getStderr: sinon.stub().returns(this.phpStderr)
+                };
+            this.io.install(this.phpEngine);
+            this.io.install(secondPhpEngine);
+
+            this.phpStdout.emit('data', 'the output');
+
+            expect(this.process.stdout.write).to.have.been.calledOnce;
+            expect(this.process.stdout.write).to.have.been.calledWith('the output');
+            expect(this.process.stderr.write).not.to.have.been.called;
+        });
+
+        it('should only install a stderr listener once per stream', function () {
+            var secondPhpEngine = {
+                // Use the same stream objects to check the listeners are only registered once
+                getStdout: sinon.stub().returns(this.phpStdout),
+                getStderr: sinon.stub().returns(this.phpStderr)
+            };
+            this.io.install(this.phpEngine);
+            this.io.install(secondPhpEngine);
+
+            this.phpStderr.emit('data', 'the warning');
+
+            expect(this.process.stderr.write).to.have.been.calledOnce;
+            expect(this.process.stderr.write).to.have.been.calledWith('the warning');
+            expect(this.process.stdout.write).not.to.have.been.called;
+        });
     });
 });

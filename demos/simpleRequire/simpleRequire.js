@@ -2,4 +2,4 @@
 
 require('../../register');
 
-require('./print27.php');
+require('./print27.php')().execute();

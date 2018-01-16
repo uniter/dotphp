@@ -31,12 +31,24 @@ function RequireExtension(requirer, require) {
 _.extend(RequireExtension.prototype, {
     /**
      * Installs this require(...) extension
+     *
+     * @param {object} options
      */
-    install: function () {
-        var extension = this;
+    install: function (options) {
+        var extension = this,
+            sync;
+
+        if (!options) {
+            options = {};
+        }
+
+        sync = options.sync === true;
 
         extension.require.extensions['.php'] = function (module, filePath) {
-            module.exports = extension.requirer.require(filePath, Mode.asynchronous());
+            module.exports = extension.requirer.require(
+                filePath,
+                sync ? Mode.synchronous() : Mode.asynchronous()
+            );
         };
     }
 });

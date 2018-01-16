@@ -15,9 +15,10 @@ var _ = require('microdash');
  * @param {class} FileSystem
  * @param {fs} fs
  * @param {StreamFactory} streamFactory
+ * @param {Process} process
  * @constructor
  */
-function FileSystemFactory(FileSystem, fs, streamFactory) {
+function FileSystemFactory(FileSystem, fs, streamFactory, process) {
     /**
      * @type {class}
      */
@@ -26,6 +27,10 @@ function FileSystemFactory(FileSystem, fs, streamFactory) {
      * @type {fs}
      */
     this.fs = fs;
+    /**
+     * @type {Process}
+     */
+    this.process = process;
     /**
      * @type {StreamFactory}
      */
@@ -36,14 +41,12 @@ _.extend(FileSystemFactory.prototype, {
     /**
      * Creates a new FileSystem
      *
-     * @param {string} cwdPath
      * @return {FileSystem}
      */
-    create: function (cwdPath) {
-        var factory = this,
-            absoluteCWDPath = factory.fs.realpathSync(cwdPath);
+    create: function () {
+        var factory = this;
 
-        return new factory.FileSystem(factory.fs, factory.streamFactory, absoluteCWDPath);
+        return new factory.FileSystem(factory.fs, factory.streamFactory, factory.process);
     }
 });
 

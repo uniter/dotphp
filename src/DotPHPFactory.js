@@ -53,7 +53,7 @@ _.extend(DotPHPFactory.prototype, {
             streamFactory = new StreamFactory(Stream, fs),
             compiler = new Compiler(
                 transpiler,
-                new FileSystemFactory(FileSystem, fs, streamFactory),
+                new FileSystemFactory(FileSystem, fs, streamFactory, process),
                 new IncluderFactory(fs),
                 new Performance(microtime),
                 new IO(process),

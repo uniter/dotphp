@@ -3,7 +3,7 @@
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Uniter\DotPHP\Demo;
 
-require 'vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 
 print 'Composer demo from ' . __FILE__ . PHP_EOL;
 

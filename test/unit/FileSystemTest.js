@@ -29,9 +29,12 @@ describe('FileSystem', function () {
             unlink: sinon.stub(),
             unlinkSync: sinon.stub()
         };
+        this.process = {
+            cwd: sinon.stub().returns('/my/cwd/path')
+        };
         this.streamFactory = sinon.createStubInstance(StreamFactory);
 
-        this.fileSystem = new FileSystem(this.fs, this.streamFactory, '/my/cwd/path');
+        this.fileSystem = new FileSystem(this.fs, this.streamFactory, this.process);
     });
 
     describe('isDirectory()', function () {

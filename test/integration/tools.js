@@ -26,6 +26,7 @@ module.exports = {
         };
 
         this.process = {
+            cwd: sinon.stub().returns('/a/cwd'),
             stderr: {
                 write: sinon.stub()
             },
