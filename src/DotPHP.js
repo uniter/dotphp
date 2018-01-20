@@ -18,9 +18,10 @@ var _ = require('microdash'),
  * @param {Evaluator} evaluator
  * @param {Transpiler} transpiler
  * @param {Function} jsBeautify Beautify NPM package
+ * @param {StdinReader} stdinReader
  * @constructor
  */
-function DotPHP(requireExtension, requirer, evaluator, transpiler, jsBeautify) {
+function DotPHP(requireExtension, requirer, evaluator, transpiler, jsBeautify, stdinReader) {
     /**
      * @type {Evaluator}
      */
@@ -37,6 +38,10 @@ function DotPHP(requireExtension, requirer, evaluator, transpiler, jsBeautify) {
      * @type {Requirer}
      */
     this.requirer = requirer;
+    /**
+     * @type {StdinReader}
+     */
+    this.stdinReader = stdinReader;
     /**
      * @type {Transpiler}
      */
@@ -64,6 +69,15 @@ _.extend(DotPHP.prototype, {
      */
     evaluateSync: function (phpCode, filePath) {
         return this.evaluator.evaluate(phpCode, filePath, Mode.synchronous());
+    },
+
+    /**
+     * Reads PHP code from stdin and returns a promise to be resolved when it has all been received
+     *
+     * @returns {Promise}
+     */
+    readStdin: function () {
+        return this.stdinReader.read();
     },
 
     /**

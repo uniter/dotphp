@@ -9,7 +9,8 @@
 
 'use strict';
 
-var _ = require('microdash');
+var _ = require('microdash'),
+    Promise = require('lie');
 
 /**
  * @param {Compiler} compiler
@@ -33,13 +34,26 @@ _.extend(Evaluator.prototype, {
      */
     evaluate: function (phpCode, filePath, mode) {
         var evaluator = this,
-            compiledModule = evaluator.compiler.compile(phpCode, filePath, mode),
-            phpEngine = compiledModule(),
+            compiledModule,
+            phpEngine,
             resultValueOrPromise;
 
-        resultValueOrPromise = phpEngine.execute();
+        try {
+            compiledModule = evaluator.compiler.compile(phpCode, filePath, mode);
+            phpEngine = compiledModule();
 
-        return resultValueOrPromise;
+            resultValueOrPromise = phpEngine.execute();
+
+            return resultValueOrPromise;
+        } catch (error) {
+            if (mode.isSynchronous()) {
+                // Synchronous mode: allow the error to bubble up the call stack
+                throw error;
+            }
+
+            // Asynchronous mode: for API consistency, still return a Promise but reject it
+            return Promise.reject(error);
+        }
     }
 });
 

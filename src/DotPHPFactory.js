@@ -20,6 +20,7 @@ var _ = require('microdash'),
     Performance = require('./Performance'),
     RequireExtension = require('./RequireExtension'),
     Requirer = require('./Requirer'),
+    StdinReader = require('./StdinReader'),
     Stream = require('./Stream'),
     StreamFactory = require('./StreamFactory'),
     Transpiler = require('./Transpiler'),
@@ -66,7 +67,8 @@ _.extend(DotPHPFactory.prototype, {
                 requirer,
                 evaluator,
                 transpiler,
-                jsBeautify.js_beautify
+                jsBeautify.js_beautify,
+                new StdinReader(process.stdin)
             );
 
         return dotPHP;

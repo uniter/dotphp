@@ -30,6 +30,8 @@ describe('Evaluator', function () {
         this.compiler.compile.returns(this.compiledModule);
         this.compiledModule.returns(this.phpEngine);
 
+        this.mode.isSynchronous.returns(false);
+
         this.evaluator = new Evaluator(this.compiler);
     });
 
@@ -58,6 +60,22 @@ describe('Evaluator', function () {
         it('should return the result from executing the module', function () {
             expect(this.evaluator.evaluate('<?php print "my program";', '/my/module.php', this.mode))
                 .to.equal(this.result);
+        });
+
+        it('should not catch an error thrown in synchronous mode', function () {
+            this.mode.isSynchronous.returns(true);
+            this.compiler.compile.throws(new Error('Bang'));
+
+            expect(function () {
+                this.evaluator.evaluate('<?php print "my program";', '/my/module.php', this.mode);
+            }.bind(this)).to.throw(Error, 'Bang');
+        });
+
+        it('should return a rejected promise when an error is thrown in asynchronous mode', function () {
+            this.compiler.compile.throws(new Error('Bang'));
+
+            expect(this.evaluator.evaluate('<?php print "my program";', '/my/module.php', this.mode))
+                .to.eventually.be.rejectedWith(Error, 'Bang');
         });
     });
 });

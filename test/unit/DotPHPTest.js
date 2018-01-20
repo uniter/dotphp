@@ -14,8 +14,10 @@ var expect = require('chai').expect,
     DotPHP = require('../../src/DotPHP'),
     Evaluator = require('../../src/Evaluator'),
     Mode = require('../../src/Mode'),
+    Promise = require('lie'),
     RequireExtension = require('../../src/RequireExtension'),
     Requirer = require('../../src/Requirer'),
+    StdinReader = require('../../src/StdinReader'),
     Transpiler = require('../../src/Transpiler');
 
 describe('DotPHP', function () {
@@ -24,6 +26,7 @@ describe('DotPHP', function () {
         this.jsBeautify = sinon.stub();
         this.requireExtension = sinon.createStubInstance(RequireExtension);
         this.requirer = sinon.createStubInstance(Requirer);
+        this.stdinReader = sinon.createStubInstance(StdinReader);
         this.transpiler = sinon.createStubInstance(Transpiler);
 
         this.dotPHP = new DotPHP(
@@ -31,7 +34,8 @@ describe('DotPHP', function () {
             this.requirer,
             this.evaluator,
             this.transpiler,
-            this.jsBeautify
+            this.jsBeautify,
+            this.stdinReader
         );
     });
 
@@ -82,6 +86,15 @@ describe('DotPHP', function () {
             this.evaluator.evaluate.returns(21);
 
             expect(this.dotPHP.evaluateSync('<?php print "my program";', '/some/module.php')).to.equal(21);
+        });
+    });
+
+    describe('readStdin()', function () {
+        it('should return the promise from the StdinReader', function () {
+            var promise = sinon.createStubInstance(Promise);
+            this.stdinReader.read.returns(promise);
+
+            expect(this.dotPHP.readStdin()).to.equal(promise);
         });
     });
 
