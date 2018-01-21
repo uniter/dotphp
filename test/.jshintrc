@@ -9,7 +9,8 @@
         "afterEach": false,
         "beforeEach": false,
         "describe": false,
-        "it": false
+        "it": false,
+        "Promise": true
     },
     "immed": true,
     "indent": 4,
