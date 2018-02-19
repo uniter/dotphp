@@ -22,6 +22,7 @@ var binaryName = require('path').basename(process.argv[1]).replace(/\.js$/, ''),
         'alias': {
             'f': 'file',
             'r': 'run',
+            's': 'sync',
             't': 'transpile-only',
             'u': 'dump-ast'
         },
@@ -35,8 +36,37 @@ var binaryName = require('path').basename(process.argv[1]).replace(/\.js$/, ''),
     }),
     phpParser,
     phpToAST = require('phptoast'),
+    syncMode = hasOwn.call(parsedOptions, 'sync'),
     PHPParseError = require('phpcommon').PHPParseError;
 
+/**
+ * Handles a successful execution (one that didn't end with an exception being thrown)
+ *
+ * @param {Value} resultValue
+ */
+function handleSuccess(resultValue) {
+    if (resultValue.getType() === 'exit') {
+        // Don't explicitly exit with `process.exit(...)`, as there may be other I/O events to complete
+        // `process.exitCode` will be respected if `.exit(...)` is not called or is called with no argument
+        process.exitCode = resultValue.getStatus();
+    }
+}
+
+/**
+ * Handles a failed execution, where an error was thrown
+ *
+ * @param {Error} error
+ */
+function handleError(error) {
+    process.stderr.write(error.message + '\n');
+    process.exitCode = error instanceof PHPParseError ? 254 : 255;
+}
+
+/**
+ * Executes the collected PHP code
+ *
+ * @param {string} phpCode
+ */
 function runPHP(phpCode) {
     // Only dump the AST to stdout if requested
     if (hasOwn.call(parsedOptions, 'dump-ast')) {
@@ -52,19 +82,25 @@ function runPHP(phpCode) {
         return;
     }
 
-    dotPHP.evaluate(phpCode, filePath).then(function (resultValue) {
-        if (resultValue.getType() === 'exit') {
-            // Don't explicitly exit with `process.exit(...)`, as there may be other I/O events to complete
-            // `process.exitCode` will be respected if `.exit(...)` is not called or is called with no argument
-            process.exitCode = resultValue.getStatus();
-            return;
-        }
+    if (syncMode) {
+        // Synchronous mode
 
-        // PHP program did not explicitly exit, nothing to do
-    }, function (error) {
-        process.stderr.write(error.message + '\n');
-        process.exitCode = error instanceof PHPParseError ? 254 : 255;
-    });
+        try {
+            handleSuccess(dotPHP.evaluateSync(phpCode, filePath));
+        } catch (error) {
+            handleError(error);
+        }
+    } else {
+        // Asynchronous (Promise-based) mode
+
+        dotPHP.evaluate(phpCode, filePath).then(function (resultValue) {
+            handleSuccess(resultValue);
+
+            // PHP program did not explicitly exit, nothing to do
+        }, function (error) {
+            handleError(error);
+        });
+    }
 }
 
 if (hasOwn.call(parsedOptions, 'run')) {
