@@ -48,7 +48,7 @@ _.extend(DotPHPFactory.prototype, {
      */
     create: function (fs, process, require) {
         var transpiler = new Transpiler(
-                phpToAST.create(null, {captureAllOffsets: true}),
+                phpToAST.create(null, {captureAllBounds: true}),
                 phpToJS
             ),
             streamFactory = new StreamFactory(Stream, fs),
