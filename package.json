@@ -31,9 +31,9 @@
     "microdash": "~1",
     "microtime": "^2.1.1",
     "minimist": "^1.2.0",
-    "phpruntime": "~5",
-    "phptoast": "~5",
-    "phptojs": "~5"
+    "phpruntime": "^5.9.2-experimental.3",
+    "phptoast": "^6.0.2",
+    "phptojs": "^6.1.0"
   },
   "devDependencies": {
     "chai": "^2.3.0",
