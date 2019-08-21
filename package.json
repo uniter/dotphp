@@ -26,19 +26,19 @@
     "test": "npm run jshint && npm run mocha"
   },
   "dependencies": {
-    "js-beautify": "^1.8.9",
+    "js-beautify": "^1.10.2",
     "lie": "^3.3.0",
     "microdash": "~1",
     "microtime": "^2.1.9",
     "minimist": "^1.2.0",
-    "phpruntime": "^5.9.2-experimental.6",
-    "phptoast": "^6.0.3",
-    "phptojs": "^6.1.1"
+    "phpruntime": "^6.0.1",
+    "phptoast": "^6.0.4",
+    "phptojs": "^6.1.2"
   },
   "devDependencies": {
     "chai": "^2.3.0",
     "chai-as-promised": "^5.1.0",
-    "jshint": "^2.10.1",
+    "jshint": "^2.10.2",
     "mocha": "^5.2.0",
     "nowdoc": "^1.0.0",
     "sinon": "~1.15",
