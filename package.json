@@ -29,11 +29,11 @@
     "js-beautify": "^1.10.2",
     "lie": "^3.3.0",
     "microdash": "~1",
-    "microtime": "^2.1.9",
+    "microtime": "^3.0.0",
     "minimist": "^1.2.0",
-    "phpruntime": "^6.0.1",
-    "phptoast": "^6.0.4",
-    "phptojs": "^6.1.2"
+    "phpruntime": "^6.0.2",
+    "phptoast": "^7.0.0",
+    "phptojs": "^7.0.0"
   },
   "devDependencies": {
     "chai": "^2.3.0",
