@@ -21,6 +21,7 @@ var binaryName = require('path').basename(process.argv[1]).replace(/\.js$/, ''),
         'string': ['help', 'dump-ast', 'f', 'r', 'run', 't', 'transpile-only', 'u'],
         'alias': {
             'f': 'file',
+            'h': 'help',
             'r': 'run',
             's': 'sync',
             't': 'transpile-only',
@@ -34,10 +35,12 @@ var binaryName = require('path').basename(process.argv[1]).replace(/\.js$/, ''),
             return true;
         }
     }),
+    phpCommon = require('phpcommon'),
     phpParser,
     phpToAST = require('phptoast'),
     syncMode = hasOwn.call(parsedOptions, 'sync'),
-    PHPParseError = require('phpcommon').PHPParseError;
+    PHPError = phpCommon.PHPError,
+    PHPParseError = phpCommon.PHPParseError;
 
 /**
  * Handles a successful execution (one that didn't end with an exception being thrown)
@@ -58,7 +61,10 @@ function handleSuccess(resultValue) {
  * @param {Error} error
  */
 function handleError(error) {
-    process.stderr.write(error.message + '\n');
+    if (!(error instanceof PHPError)) {
+        throw error;
+    }
+
     process.exitCode = error instanceof PHPParseError ? 254 : 255;
 }
 
@@ -78,7 +84,7 @@ function runPHP(phpCode) {
 
     // Only dump the transpiled JS to stdout if requested
     if (hasOwn.call(parsedOptions, 'transpile-only')) {
-        process.stdout.write(dotPHP.transpile(phpCode, filePath));
+        process.stdout.write(dotPHP.transpile(phpCode, filePath) + '\n');
         return;
     }
 
@@ -106,6 +112,8 @@ function runPHP(phpCode) {
 if (hasOwn.call(parsedOptions, 'run')) {
     // PHP has been given directly (without the `<?php` prefix) to be executed
 
+    filePath = 'Command line code';
+
     runPHP('<?php ' + parsedOptions.run);
 } else if (parsedOptions.file || parsedOptions._.length > 0) {
     // The path to a PHP file to execute has been given
@@ -115,24 +123,28 @@ if (hasOwn.call(parsedOptions, 'run')) {
     fs.readFile(filePath, function (error, contentBuffer) {
         runPHP(contentBuffer.toString());
     });
-} else if (process.argv.length === 2) {
+} else if (hasOwn.call(parsedOptions, 'help')) {
+    console.log([
+        'Usage: ' + binaryName + ' <options> <path to PHP file>',
+        '',
+        '  -u / --dump-ast       - Dump AST of PHP code instead of executing it',
+        '  -t / --transpile-only - Dump transpiled JS of PHP code instead of executing it',
+        '  -r / --run=<code>     - Run PHP <code> without using script tags <? ... ?>',
+        '  -s / --sync           - Run PHP code in synchronous mode for speed (default is asynchronous for compatibility)',
+        '  -h / --help           - Show this help'
+    ].join('\n'));
+
+    process.exit(1);
+} else {
     /**
      * No arguments given: stdin-reading mode:
      * - allows PHP code to be piped in, eg. `echo '<?php print 21;' | dotphp`
      * - ended with Ctrl+D in a TTY
      */
 
+    filePath = 'Standard input code';
+
     dotPHP.readStdin().then(function (stdin) {
         runPHP(stdin);
     });
-} else {
-    console.log([
-        'Usage: ' + binaryName + ' <options> <path to PHP file>',
-        '',
-        '  -u / --dump-ast       - Dump AST of PHP code instead of executing it',
-        '  -t / --transpile-only - Dump transpiled JS of PHP code instead of executing it',
-        '  -r / --run=<code>     - Run PHP <code> without using script tags <? ... ?>'
-    ].join('\n'));
-
-    process.exit(1);
 }

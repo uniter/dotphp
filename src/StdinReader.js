@@ -39,17 +39,17 @@ _.extend(StdinReader.prototype, {
 
             reader.stdin.setEncoding('utf8');
 
-            reader.stdin.on('readable', function () {
-                var chunk = reader.stdin.read();
-
-                if (chunk !== null) {
-                    phpCode += chunk;
-                }
+            reader.stdin.on('data', function (chunk) {
+                phpCode += chunk;
             });
 
             reader.stdin.on('end', function () {
                 resolve(phpCode);
             });
+
+            // Set stream to "flowing" mode, so that "data" events
+            // will be emitted as data comes in
+            reader.stdin.resume();
         });
     }
 });

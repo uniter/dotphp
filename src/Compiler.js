@@ -13,30 +13,31 @@ var _ = require('microdash');
 
 /**
  * @param {Transpiler} transpiler
- * @param {FileSystemFactory} fileSystemFactory
  * @param {IncluderFactory} includerFactory
- * @param {Performance} performance
- * @param {IO} io
  * @param {Function} require Node.js require(...) function to fetch the runtime via
+ * @param {EnvironmentProvider} environmentProvider
+ * @param {FileSystem} fileSystem
  * @constructor
  */
-function Compiler(transpiler, fileSystemFactory, includerFactory, performance, io, require) {
+function Compiler(
+    transpiler,
+    includerFactory,
+    require,
+    environmentProvider,
+    fileSystem
+) {
     /**
-     * @type {FileSystemFactory}
+     * @type {EnvironmentProvider}
      */
-    this.fileSystemFactory = fileSystemFactory;
+    this.environmentProvider = environmentProvider;
+    /**
+     * @type {FileSystem}
+     */
+    this.fileSystem = fileSystem;
     /**
      * @type {IncluderFactory}
      */
     this.includerFactory = includerFactory;
-    /**
-     * @type {IO}
-     */
-    this.io = io;
-    /**
-     * @type {Performance}
-     */
-    this.performance = performance;
     /**
      * @type {Function}
      */
@@ -61,23 +62,13 @@ _.extend(Compiler.prototype, {
         var compiler = this,
             transpiledCode = compiler.transpiler.transpile(phpCode, filePath, mode),
             compiledModule = new Function('require', 'return ' + transpiledCode)(compiler.require),
-            fileSystem = compiler.fileSystemFactory.create(),
+            environment = compiler.environmentProvider.getEnvironmentForMode(mode),
             configuredCompiledModule = compiledModule.using({
-                fileSystem: fileSystem,
-                include: compiler.includerFactory.create(compiler, fileSystem, mode),
-                path: filePath,
-                performance: compiler.performance
-            }),
-            // Define a new module factory that will attach the standard IO to the environment if needed
-            moduleFactory = function (options, environment, topLevelScope) {
-                var phpEngine = configuredCompiledModule(options, environment, topLevelScope);
+                include: compiler.includerFactory.create(compiler, compiler.fileSystem, mode),
+                path: filePath
+            }, environment);
 
-                compiler.io.install(phpEngine);
-
-                return phpEngine;
-            };
-
-        return moduleFactory;
+        return configuredCompiledModule;
     }
 });
 

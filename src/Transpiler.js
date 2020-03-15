@@ -49,6 +49,7 @@ _.extend(Transpiler.prototype, {
         return transpiler.phpToJS.transpile(
             phpAST,
             {
+                lineNumbers: true,
                 path: filePath,
                 sourceMap: {
                     sourceContent: phpCode

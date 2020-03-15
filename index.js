@@ -10,6 +10,8 @@
 'use strict';
 
 var DotPHPFactory = require('./src/DotPHPFactory'),
-    fs = require('fs');
+    asyncRuntime = require('phpruntime/async'),
+    fs = require('fs'),
+    syncRuntime = require('phpruntime/sync');
 
-module.exports = new DotPHPFactory().create(fs, process, require);
+module.exports = new DotPHPFactory().create(fs, process, asyncRuntime, syncRuntime, require);

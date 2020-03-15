@@ -12,9 +12,9 @@
 var _ = require('microdash'),
     Compiler = require('./Compiler'),
     DotPHP = require('./DotPHP'),
+    EnvironmentProvider = require('./EnvironmentProvider'),
     Evaluator = require('./Evaluator'),
     FileSystem = require('./FileSystem'),
-    FileSystemFactory = require('./FileSystemFactory'),
     IncluderFactory = require('./IncluderFactory'),
     IO = require('./IO'),
     Performance = require('./Performance'),
@@ -43,24 +43,29 @@ _.extend(DotPHPFactory.prototype, {
      *
      * @param {fs} fs
      * @param {Process} process
+     * @param {Runtime} asyncRuntime
+     * @param {Runtime} syncRuntime
      * @param {Function} require
      * @returns {DotPHP}
      */
-    create: function (fs, process, require) {
+    create: function (fs, process, asyncRuntime, syncRuntime, require) {
         var transpiler = new Transpiler(
                 phpToAST.create(null, {captureAllBounds: true}),
                 phpToJS
             ),
             streamFactory = new StreamFactory(Stream, fs),
+            fileSystem = new FileSystem(fs, streamFactory, process),
+            io = new IO(process),
+            performance = new Performance(microtime),
+            environmentProvider = new EnvironmentProvider(asyncRuntime, syncRuntime, io, fileSystem, performance),
             compiler = new Compiler(
                 transpiler,
-                new FileSystemFactory(FileSystem, fs, streamFactory, process),
                 new IncluderFactory(fs),
-                new Performance(microtime),
-                new IO(process),
-                require
+                require,
+                environmentProvider,
+                fileSystem
             ),
-            evaluator = new Evaluator(compiler),
+            evaluator = new Evaluator(compiler, environmentProvider),
             requirer = new Requirer(fs, compiler),
             dotPHP = new DotPHP(
                 new RequireExtension(requirer, require),

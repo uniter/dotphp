@@ -30,4 +30,15 @@ describe('DotPHP .evaluateSync(...) integration - synchronous PHP evaluation', f
         expect(result.getType()).to.equal('exit');
         expect(result.getStatus()).to.equal(21);
     });
+
+    it('should perform evaluations in a shared environment', function () {
+        var result;
+        // Define a variable that the second evaluation should be able to access
+        this.dotPHP.evaluateSync('<?php $myVar = 1001;', '/my/first_module.php');
+
+        result = this.dotPHP.evaluateSync('<?php return $myVar * 2;', '/my/second_module.php');
+
+        expect(result.getType()).to.equal('int');
+        expect(result.getNative()).to.equal(2002);
+    });
 });

@@ -10,17 +10,24 @@
 'use strict';
 
 var _ = require('microdash'),
+    phpCommon = require('phpcommon'),
+    PHPError = phpCommon.PHPError,
     Promise = require('lie');
 
 /**
  * @param {Compiler} compiler
+ * @param {EnvironmentProvider} environmentProvider
  * @constructor
  */
-function Evaluator(compiler) {
+function Evaluator(compiler, environmentProvider) {
     /**
      * @type {Compiler}
      */
     this.compiler = compiler;
+    /**
+     * @type {EnvironmentProvider}
+     */
+    this.environmentProvider = environmentProvider;
 }
 
 _.extend(Evaluator.prototype, {
@@ -34,14 +41,25 @@ _.extend(Evaluator.prototype, {
      */
     evaluate: function (phpCode, filePath, mode) {
         var evaluator = this,
+            environment = evaluator.environmentProvider.getEnvironmentForMode(mode),
             compiledModule,
             phpEngine,
             resultValueOrPromise;
 
         try {
-            compiledModule = evaluator.compiler.compile(phpCode, filePath, mode);
-            phpEngine = compiledModule();
+            try {
+                compiledModule = evaluator.compiler.compile(phpCode, filePath, mode);
+            } catch (parseTranspileError) {
+                if (parseTranspileError instanceof PHPError) {
+                    // Report parser or transpiler errors via PHPCore,
+                    // so that INI settings such as `display_errors` are taken into account
+                    environment.reportError(parseTranspileError);
+                }
 
+                throw parseTranspileError;
+            }
+
+            phpEngine = compiledModule();
             resultValueOrPromise = phpEngine.execute();
 
             return resultValueOrPromise;

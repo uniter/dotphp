@@ -30,4 +30,14 @@ describe('DotPHP .evaluate(...) integration - asynchronous PHP evaluation', func
             expect(result.getStatus()).to.equal(21);
         });
     });
+
+    it('should perform evaluations in a shared environment', function () {
+        // Define a variable that the second evaluation should be able to access
+        return this.dotPHP.evaluate('<?php $myVar = 1001;', '/my/first_module.php').then(function () {
+            return this.dotPHP.evaluate('<?php return $myVar * 2;', '/my/second_module.php').then(function (result) {
+                expect(result.getType()).to.equal('int');
+                expect(result.getNative()).to.equal(2002);
+            }.bind(this));
+        }.bind(this));
+    });
 });

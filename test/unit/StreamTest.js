@@ -29,7 +29,7 @@ describe('Stream', function () {
         it('should be resolved on success', function () {
             this.fs.close.withArgs(2120).yields(null);
 
-            return expect(this.stream.close()).to.eventually.be.resolved;
+            return expect(this.stream.close()).to.eventually.be.fulfilled;
         });
 
         it('should be rejected with the error from the fs module on failure', function () {
@@ -94,7 +94,7 @@ describe('Stream', function () {
         it('should be resolved on success', function () {
             this.fs.write.withArgs(2120, 'my data', 0, 7).yields(null, 7);
 
-            return expect(this.stream.write('my data')).to.eventually.be.resolved;
+            return expect(this.stream.write('my data')).to.eventually.be.fulfilled;
         });
 
         it('should be rejected with the error from the fs module on failure', function () {

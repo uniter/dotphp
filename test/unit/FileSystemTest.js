@@ -167,7 +167,7 @@ describe('FileSystem', function () {
         it('should be resolved on success', function () {
             this.fs.unlink.withArgs('/my/resolved/real/path').yields(null);
 
-            return expect(this.fileSystem.unlink('/my/path')).to.eventually.be.resolved;
+            return expect(this.fileSystem.unlink('/my/path')).to.eventually.be.fulfilled;
         });
 
         it('should be rejected with the error from the fs module on failure', function () {

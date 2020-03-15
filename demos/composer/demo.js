@@ -2,4 +2,6 @@
 
 require('../../register');
 
-require('./demo.php')().execute();
+require('./demo.php')().execute().catch(function (error) {
+    console.error(error);
+});

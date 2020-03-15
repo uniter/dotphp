@@ -42,4 +42,22 @@ describe('DotPHP .requireSync(...) integration - synchronous module require', fu
 
         expect(this.dotPHP.requireSync('/real/path/to/my/module.php')().execute().getNative()).to.equal(1021);
     });
+
+    it('should correctly require a PHP module that includes another where both print', function () {
+        this.fs.realpathSync.withArgs('/path/to/my/module.php').returns('/real/path/to/my/module.php');
+        this.fs.readFileSync
+            .withArgs('/real/path/to/my/module.php')
+            .returns({toString: sinon.stub().returns('<?php require "../another.php"; print 21;')});
+        this.fs.realpathSync.withArgs('/real/path/to/another.php').returns('/real/path/to/another.php');
+        this.fs.readFileSync
+            .withArgs('/my/real/another.php')
+            .returns({toString: sinon.stub().returns('<?php $anotherVar = 1000; print $anotherVar;')});
+        // Set the cwd for the `../another.php` path above to be resolved against
+        this.process.cwd.returns('/my/real/cwd');
+
+        this.dotPHP.requireSync('/real/path/to/my/module.php')().execute();
+
+        expect(this.stdoutOutput).to.deep.equal(['1000', '21']);
+        expect(this.stderrOutput).to.deep.equal([]);
+    });
 });

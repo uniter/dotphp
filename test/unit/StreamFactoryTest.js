@@ -34,7 +34,7 @@ describe('StreamFactory', function () {
         });
 
         it('should return the created Stream', function () {
-            var stream = sinon.createStubInstance(this.Stream);
+            var stream = new this.Stream();
             this.Stream.returns(stream);
 
             expect(this.streamFactory.create('/my/file/path.ext', 27)).to.equal(stream);
