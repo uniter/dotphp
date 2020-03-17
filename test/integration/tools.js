@@ -25,13 +25,20 @@ module.exports = {
             exports: {}
         };
 
+        this.stderrOutput = [];
+        this.stdoutOutput = [];
+
         this.process = {
             cwd: sinon.stub().returns('/a/cwd'),
             stderr: {
-                write: sinon.stub()
+                write: sinon.stub().callsFake(function (data) {
+                    this.stderrOutput.push(data);
+                }.bind(this))
             },
             stdout: {
-                write: sinon.stub()
+                write: sinon.stub().callsFake(function (data) {
+                    this.stdoutOutput.push(data);
+                }.bind(this))
             }
         };
 
@@ -40,6 +47,12 @@ module.exports = {
         this.require.withArgs('phpruntime').returns(asyncRuntime);
         this.require.withArgs('phpruntime/sync').returns(syncRuntime);
 
-        this.dotPHP = new DotPHPFactory().create(this.fs, this.process, this.require);
+        this.dotPHP = new DotPHPFactory().create(
+            this.fs,
+            this.process,
+            asyncRuntime,
+            syncRuntime,
+            this.require
+        );
     }
 };

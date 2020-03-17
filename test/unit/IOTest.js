@@ -11,120 +11,94 @@
 
 var expect = require('chai').expect,
     sinon = require('sinon'),
+    Environment = require('phpcore/src/Environment'),
     EventEmitter = require('events').EventEmitter,
     IO = require('../../src/IO');
 
 describe('IO', function () {
+    var environment,
+        io,
+        phpStderr,
+        phpStdout,
+        process,
+        stderr,
+        stdout;
+
     beforeEach(function () {
-        this.phpStderr = new EventEmitter();
-        this.phpStdout = new EventEmitter();
-        this.phpEngine = {
-            getStderr: sinon.stub().returns(this.phpStderr),
-            getStdout: sinon.stub().returns(this.phpStdout)
-        };
-        this.stderr = {
+        environment = sinon.createStubInstance(Environment);
+        phpStderr = new EventEmitter();
+        phpStdout = new EventEmitter();
+        environment.getStderr.returns(phpStderr);
+        environment.getStdout.returns(phpStdout);
+        stderr = {
             write: sinon.stub()
         };
-        this.stdout = {
+        stdout = {
             write: sinon.stub()
         };
-        this.process = {
-            stderr: this.stderr,
-            stdout: this.stdout
+        process = {
+            stderr: stderr,
+            stdout: stdout
         };
 
-        this.io = new IO(this.process);
+        io = new IO(process);
     });
 
     describe('install()', function () {
         it('should install a listener that copies data from the PHP stdout to process stdout', function () {
-            this.io.install(this.phpEngine);
+            io.install(environment);
 
-            this.phpStdout.emit('data', 'some output');
+            phpStdout.emit('data', 'some output');
 
-            expect(this.process.stdout.write).to.have.been.calledOnce;
-            expect(this.process.stdout.write).to.have.been.calledWith('some output');
-            expect(this.process.stderr.write).not.to.have.been.called;
+            expect(process.stdout.write).to.have.been.calledOnce;
+            expect(process.stdout.write).to.have.been.calledWith('some output');
+            expect(process.stderr.write).not.to.have.been.called;
         });
 
         it('should install a listener that copies data from the PHP stderr to process stderr', function () {
-            this.io.install(this.phpEngine);
+            io.install(environment);
 
-            this.phpStderr.emit('data', 'Bang! Something went wrong');
+            phpStderr.emit('data', 'Bang! Something went wrong');
 
-            expect(this.process.stderr.write).to.have.been.calledOnce;
-            expect(this.process.stderr.write).to.have.been.calledWith('Bang! Something went wrong');
-            expect(this.process.stdout.write).not.to.have.been.called;
+            expect(process.stderr.write).to.have.been.calledOnce;
+            expect(process.stderr.write).to.have.been.calledWith('Bang! Something went wrong');
+            expect(process.stdout.write).not.to.have.been.called;
         });
 
         it('should install a stdout listener onto each different one provided', function () {
             var secondPhpStderr = new EventEmitter(),
                 secondPhpStdout = new EventEmitter(),
-                secondPhpEngine = {
-                    getStdout: sinon.stub().returns(secondPhpStdout),
-                    getStderr: sinon.stub().returns(secondPhpStderr)
-                };
-            this.io.install(this.phpEngine);
-            this.io.install(secondPhpEngine);
+                secondEnvironment = sinon.createStubInstance(Environment);
+            secondEnvironment.getStdout.returns(secondPhpStdout);
+            secondEnvironment.getStderr.returns(secondPhpStderr);
+            io.install(environment);
+            io.install(secondEnvironment);
 
-            this.phpStdout.emit('data', 'first output');
+            phpStdout.emit('data', 'first output');
             secondPhpStdout.emit('data', 'second output');
 
-            expect(this.process.stdout.write).to.have.been.calledTwice;
-            expect(this.process.stdout.write).to.have.been.calledWith('first output');
-            expect(this.process.stdout.write).to.have.been.calledWith('second output');
-            expect(this.process.stderr.write).not.to.have.been.called;
+            expect(process.stdout.write).to.have.been.calledTwice;
+            expect(process.stdout.write).to.have.been.calledWith('first output');
+            expect(process.stdout.write).to.have.been.calledWith('second output');
+            expect(process.stderr.write).not.to.have.been.called;
         });
 
         it('should install a stderr listener onto each different one provided', function () {
             var secondPhpStderr = new EventEmitter(),
                 secondPhpStdout = new EventEmitter(),
-                secondPhpEngine = {
-                    getStdout: sinon.stub().returns(secondPhpStdout),
-                    getStderr: sinon.stub().returns(secondPhpStderr)
-                };
-            this.io.install(this.phpEngine);
-            this.io.install(secondPhpEngine);
+                secondEnvironment = sinon.createStubInstance(Environment);
+            secondEnvironment.getStdout.returns(secondPhpStdout);
+            secondEnvironment.getStderr.returns(secondPhpStderr);
+            io.install(environment);
+            io.install(secondEnvironment);
 
-            this.phpStderr.emit('data', 'first warning');
+            phpStderr.emit('data', 'first warning');
             secondPhpStderr.emit('data', 'second warning');
 
-            expect(this.process.stderr.write).to.have.been.calledTwice;
-            expect(this.process.stderr.write).to.have.been.calledWith('first warning');
-            expect(this.process.stderr.write).to.have.been.calledWith('second warning');
-            expect(this.process.stdout.write).not.to.have.been.called;
-        });
-
-        it('should only install a stdout listener once per stream', function () {
-            var secondPhpEngine = {
-                    // Use the same stream objects to check the listeners are only registered once
-                    getStdout: sinon.stub().returns(this.phpStdout),
-                    getStderr: sinon.stub().returns(this.phpStderr)
-                };
-            this.io.install(this.phpEngine);
-            this.io.install(secondPhpEngine);
-
-            this.phpStdout.emit('data', 'the output');
-
-            expect(this.process.stdout.write).to.have.been.calledOnce;
-            expect(this.process.stdout.write).to.have.been.calledWith('the output');
-            expect(this.process.stderr.write).not.to.have.been.called;
-        });
-
-        it('should only install a stderr listener once per stream', function () {
-            var secondPhpEngine = {
-                // Use the same stream objects to check the listeners are only registered once
-                getStdout: sinon.stub().returns(this.phpStdout),
-                getStderr: sinon.stub().returns(this.phpStderr)
-            };
-            this.io.install(this.phpEngine);
-            this.io.install(secondPhpEngine);
-
-            this.phpStderr.emit('data', 'the warning');
-
-            expect(this.process.stderr.write).to.have.been.calledOnce;
-            expect(this.process.stderr.write).to.have.been.calledWith('the warning');
-            expect(this.process.stdout.write).not.to.have.been.called;
+            expect(process.stderr.write).to.have.been.calledTwice;
+            expect(process.stderr.write).to.have.been.calledWith('first warning');
+            expect(process.stderr.write).to.have.been.calledWith('second warning');
+            expect(process.stdout.write).not.to.have.been.called;
         });
     });
 });

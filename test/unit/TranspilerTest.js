@@ -15,77 +15,83 @@ var expect = require('chai').expect,
     Transpiler = require('../../src/Transpiler');
 
 describe('Transpiler', function () {
+    var mode,
+        parserState,
+        phpParser,
+        phpToJS,
+        transpiler;
+
     beforeEach(function () {
-        this.mode = sinon.createStubInstance(Mode);
-        this.parserState = {
+        mode = sinon.createStubInstance(Mode);
+        parserState = {
             setPath: sinon.stub()
         };
-        this.phpParser = {
-            getState: sinon.stub().returns(this.parserState),
+        phpParser = {
+            getState: sinon.stub().returns(parserState),
             parse: sinon.stub().returns({name: 'N_PROGRAM'})
         };
-        this.phpToJS = {
+        phpToJS = {
             transpile: sinon.stub().returns('require("phpruntime").compile();')
         };
 
-        this.transpiler = new Transpiler(this.phpParser, this.phpToJS);
+        transpiler = new Transpiler(phpParser, phpToJS);
     });
 
     describe('transpile()', function () {
         it('should set the module\'s path before parsing', function () {
-            this.transpiler.transpile('<?php return 21;', '/my/module.php', this.mode);
+            transpiler.transpile('<?php return 21;', '/my/module.php', mode);
 
-            expect(this.parserState.setPath).to.have.been.calledOnce;
-            expect(this.parserState.setPath).to.have.been.calledWith('/my/module.php');
-            expect(this.parserState.setPath).to.have.been.calledBefore(this.phpParser.parse);
+            expect(parserState.setPath).to.have.been.calledOnce;
+            expect(parserState.setPath).to.have.been.calledWith('/my/module.php');
+            expect(parserState.setPath).to.have.been.calledBefore(phpParser.parse);
         });
 
         it('should transpile the AST returned by the parser', function () {
-            this.transpiler.transpile('<?php return 21;', '/my/module.php', this.mode);
+            transpiler.transpile('<?php return 21;', '/my/module.php', mode);
 
-            expect(this.phpToJS.transpile).to.have.been.calledOnce;
-            expect(this.phpToJS.transpile).to.have.been.calledWith({name: 'N_PROGRAM'});
+            expect(phpToJS.transpile).to.have.been.calledOnce;
+            expect(phpToJS.transpile).to.have.been.calledWith({name: 'N_PROGRAM'});
         });
 
         it('should transpile the AST with the correct path', function () {
-            this.transpiler.transpile('<?php return 21;', '/my/module.php', this.mode);
+            transpiler.transpile('<?php return 21;', '/my/module.php', mode);
 
-            expect(this.phpToJS.transpile).to.have.been.calledOnce;
-            expect(this.phpToJS.transpile).to.have.been.calledWith(
+            expect(phpToJS.transpile).to.have.been.calledOnce;
+            expect(phpToJS.transpile).to.have.been.calledWith(
                 sinon.match.any,
                 sinon.match({path: '/my/module.php'})
             );
         });
 
         it('should transpile the AST with the asynchronous runtime when mode is asynchronous', function () {
-            this.mode.isSynchronous.returns(false);
+            mode.isSynchronous.returns(false);
 
-            this.transpiler.transpile('<?php return 21;', '/my/module.php', this.mode);
+            transpiler.transpile('<?php return 21;', '/my/module.php', mode);
 
-            expect(this.phpToJS.transpile).to.have.been.calledOnce;
-            expect(this.phpToJS.transpile).to.have.been.calledWith(
+            expect(phpToJS.transpile).to.have.been.calledOnce;
+            expect(phpToJS.transpile).to.have.been.calledWith(
                 sinon.match.any,
                 sinon.match({sync: false})
             );
         });
 
         it('should transpile the AST with the synchronous runtime when mode is synchronous', function () {
-            this.mode.isSynchronous.returns(true);
+            mode.isSynchronous.returns(true);
 
-            this.transpiler.transpile('<?php return 21;', '/my/module.php', this.mode);
+            transpiler.transpile('<?php return 21;', '/my/module.php', mode);
 
-            expect(this.phpToJS.transpile).to.have.been.calledOnce;
-            expect(this.phpToJS.transpile).to.have.been.calledWith(
+            expect(phpToJS.transpile).to.have.been.calledOnce;
+            expect(phpToJS.transpile).to.have.been.calledWith(
                 sinon.match.any,
                 sinon.match({sync: true})
             );
         });
 
         it('should transpile the AST with the source content for the source map', function () {
-            this.transpiler.transpile('<?php return 21;', '/my/module.php', this.mode);
+            transpiler.transpile('<?php return 21;', '/my/module.php', mode);
 
-            expect(this.phpToJS.transpile).to.have.been.calledOnce;
-            expect(this.phpToJS.transpile).to.have.been.calledWith(
+            expect(phpToJS.transpile).to.have.been.calledOnce;
+            expect(phpToJS.transpile).to.have.been.calledWith(
                 sinon.match.any,
                 sinon.match({
                     sourceMap: {
@@ -95,8 +101,20 @@ describe('Transpiler', function () {
             );
         });
 
+        it('should transpile the AST with line numbers enabled', function () {
+            transpiler.transpile('<?php return 21;', '/my/module.php', mode);
+
+            expect(phpToJS.transpile).to.have.been.calledOnce;
+            expect(phpToJS.transpile).to.have.been.calledWith(
+                sinon.match.any,
+                sinon.match({
+                    lineNumbers: true
+                })
+            );
+        });
+
         it('should return the transpiled module JS', function () {
-            expect(this.transpiler.transpile('<?php return 21;', '/my/module.php', this.mode))
+            expect(transpiler.transpile('<?php return 21;', '/my/module.php', mode))
                 .to.equal('require("phpruntime").compile();');
         });
     });
