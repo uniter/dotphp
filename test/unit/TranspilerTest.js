@@ -19,7 +19,9 @@ describe('Transpiler', function () {
         parserState,
         phpParser,
         phpToJS,
-        transpiler;
+        phpToJSConfig,
+        transpiler,
+        transpilerConfig;
 
     beforeEach(function () {
         mode = sinon.createStubInstance(Mode);
@@ -33,8 +35,14 @@ describe('Transpiler', function () {
         phpToJS = {
             transpile: sinon.stub().returns('require("phpruntime").compile();')
         };
+        phpToJSConfig = {
+            'my': 'PHPToJS config'
+        };
+        transpilerConfig = {
+            'my': 'Transpiler config'
+        };
 
-        transpiler = new Transpiler(phpParser, phpToJS);
+        transpiler = new Transpiler(phpParser, phpToJS, transpilerConfig, phpToJSConfig);
     });
 
     describe('transpile()', function () {
@@ -109,6 +117,31 @@ describe('Transpiler', function () {
                 sinon.match.any,
                 sinon.match({
                     lineNumbers: true
+                })
+            );
+        });
+
+        it('should add any custom PHPToJS config', function () {
+            transpiler.transpile('<?php return 21;', '/my/module.php', mode);
+
+            expect(phpToJS.transpile).to.have.been.calledOnce;
+            expect(phpToJS.transpile).to.have.been.calledWith(
+                sinon.match.any,
+                sinon.match({
+                    my: 'PHPToJS config'
+                })
+            );
+        });
+
+        it('should add any custom Transpiler config', function () {
+            transpiler.transpile('<?php return 21;', '/my/module.php', mode);
+
+            expect(phpToJS.transpile).to.have.been.calledOnce;
+            expect(phpToJS.transpile).to.have.been.calledWith(
+                sinon.match.any,
+                sinon.match.any,
+                sinon.match({
+                    my: 'Transpiler config'
                 })
             );
         });

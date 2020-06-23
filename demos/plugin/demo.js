@@ -2,7 +2,7 @@
 
 require('../../register')()
     .then(function () {
-        return require('./demo.php')().execute();
+        return require('./call_plugin.php')().execute();
     })
     .catch(function (error) {
         console.error(error);

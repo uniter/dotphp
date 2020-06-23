@@ -11,67 +11,126 @@
 
 var expect = require('chai').expect,
     sinon = require('sinon'),
+    Bootstrapper = require('../../src/Bootstrapper'),
+    FileCompiler = require('../../src/FileCompiler'),
     Mode = require('../../src/Mode'),
-    RequireExtension = require('../../src/RequireExtension'),
-    Requirer = require('../../src/Requirer');
+    RequireExtension = require('../../src/RequireExtension');
 
 describe('RequireExtension', function () {
+    var bootstrapper,
+        extension,
+        fileCompiler,
+        module,
+        options,
+        require;
+
     beforeEach(function () {
-        this.module = {
+        bootstrapper = sinon.createStubInstance(Bootstrapper);
+        fileCompiler = sinon.createStubInstance(FileCompiler);
+        module = {
             exports: {}
         };
-        this.require = sinon.stub();
-        this.requirer = sinon.createStubInstance(Requirer);
+        options = {};
+        require = sinon.stub();
 
-        this.require.extensions = {};
+        require.extensions = {};
 
-        this.extension = new RequireExtension(this.requirer, this.require);
+        bootstrapper.bootstrap.returns(Promise.resolve());
+
+        extension = new RequireExtension(fileCompiler, bootstrapper, require);
     });
 
     describe('install()', function () {
-        it('should install a require(...) extension for the "php" file extension', function () {
-            this.extension.install();
+        describe('when asynchronous operation is specified (the default)', function () {
+            it('should install a require(...) extension for the "php" file extension', function () {
+                return extension.install(options).then(function () {
+                    expect(require.extensions['.php']).to.be.a('function');
+                });
+            });
 
-            expect(this.require.extensions['.php']).to.be.a('function');
+            it('should install the require(...) extension after handling any bootstraps', function () {
+                return extension.install(options).then(function () {
+                    expect(bootstrapper.bootstrap).to.have.been.called;
+                });
+            });
+
+            describe('the require(...) extension installed', function () {
+                it('should ask the FileCompiler to compile the module', function () {
+                    return extension.install(options).then(function () {
+                        require.extensions['.php'](module, '/my/file/path.php');
+
+                        expect(fileCompiler.compile).to.have.been.calledOnce;
+                        expect(fileCompiler.compile).to.have.been.calledWith('/my/file/path.php');
+                    });
+                });
+
+                it('should specify asynchronous operation', function () {
+                    return extension.install(options).then(function () {
+                        require.extensions['.php'](module, '/my/file/path.php');
+
+                        expect(fileCompiler.compile).to.have.been.calledOnce;
+                        expect(fileCompiler.compile.args[0][1]).to.be.an.instanceOf(Mode);
+                        expect(fileCompiler.compile.args[0][1].isSynchronous()).to.be.false;
+                    });
+                });
+
+                it('should set the result from the Requirer as module.exports', function () {
+                    fileCompiler.compile.returns(21);
+
+                    return extension.install(options).then(function () {
+                        require.extensions['.php'](module, '/my/file/path.php');
+
+                        expect(module.exports).to.equal(21);
+                    });
+                });
+            });
         });
 
-        describe('the require(...) extension installed', function () {
-            it('should ask the Requirer to require the module', function () {
-                this.extension.install();
-
-                this.require.extensions['.php'](this.module, '/my/file/path.php');
-
-                expect(this.requirer.require).to.have.been.calledOnce;
-                expect(this.requirer.require).to.have.been.calledWith('/my/file/path.php');
+        describe('when synchronous operation is specified', function () {
+            beforeEach(function () {
+                options.sync = true;
             });
 
-            it('should specify asynchronous operation by default', function () {
-                this.extension.install();
+            it('should install a require(...) extension for the "php" file extension', function () {
+                extension.install(options);
 
-                this.require.extensions['.php'](this.module, '/my/file/path.php');
-
-                expect(this.requirer.require).to.have.been.calledOnce;
-                expect(this.requirer.require.args[0][1]).to.be.an.instanceOf(Mode);
-                expect(this.requirer.require.args[0][1].isSynchronous()).to.be.false;
+                expect(require.extensions['.php']).to.be.a('function');
             });
 
-            it('should specify synchronous operation when specified as an option', function () {
-                this.extension.install({sync: true});
+            it('should install the require(...) extension after handling any bootstraps', function () {
+                extension.install(options);
 
-                this.require.extensions['.php'](this.module, '/my/file/path.php');
-
-                expect(this.requirer.require).to.have.been.calledOnce;
-                expect(this.requirer.require.args[0][1]).to.be.an.instanceOf(Mode);
-                expect(this.requirer.require.args[0][1].isSynchronous()).to.be.true;
+                expect(bootstrapper.bootstrapSync).to.have.been.called;
             });
 
-            it('should set the result from the Requirer as module.exports', function () {
-                this.requirer.require.returns(21);
-                this.extension.install();
+            describe('the require(...) extension installed', function () {
+                it('should ask the FileCompiler to compile the module', function () {
+                    extension.install(options);
 
-                this.require.extensions['.php'](this.module, '/my/file/path.php');
+                    require.extensions['.php'](module, '/my/file/path.php');
 
-                expect(this.module.exports).to.equal(21);
+                    expect(fileCompiler.compile).to.have.been.calledOnce;
+                    expect(fileCompiler.compile).to.have.been.calledWith('/my/file/path.php');
+                });
+
+                it('should specify synchronous operation', function () {
+                    extension.install(options);
+
+                    require.extensions['.php'](module, '/my/file/path.php');
+
+                    expect(fileCompiler.compile).to.have.been.calledOnce;
+                    expect(fileCompiler.compile.args[0][1]).to.be.an.instanceOf(Mode);
+                    expect(fileCompiler.compile.args[0][1].isSynchronous()).to.be.true;
+                });
+
+                it('should set the result from the Requirer as module.exports', function () {
+                    fileCompiler.compile.returns(21);
+                    extension.install(options);
+
+                    require.extensions['.php'](module, '/my/file/path.php');
+
+                    expect(module.exports).to.equal(21);
+                });
             });
         });
     });

@@ -37,7 +37,7 @@ _.extend(Evaluator.prototype, {
      * @param {string} phpCode PHP file's source code as a string
      * @param {string|null} filePath Absolute path to the file being evaluated
      * @param {Mode} mode
-     * @return {Promise|Value}
+     * @returns {Promise|Value}
      */
     evaluate: function (phpCode, filePath, mode) {
         var evaluator = this,

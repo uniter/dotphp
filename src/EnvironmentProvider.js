@@ -19,9 +19,17 @@ var _ = require('microdash');
  * @param {IO} io
  * @param {FileSystem} fileSystem
  * @param {Performance} performance
+ * @param {ConfigSet} phpCoreConfigSet
  * @constructor
  */
-function EnvironmentProvider(asyncRuntime, syncRuntime, io, fileSystem, performance) {
+function EnvironmentProvider(
+    asyncRuntime,
+    syncRuntime,
+    io,
+    fileSystem,
+    performance,
+    phpCoreConfigSet
+) {
     /**
      * @type {Environment|null}
      */
@@ -43,6 +51,10 @@ function EnvironmentProvider(asyncRuntime, syncRuntime, io, fileSystem, performa
      */
     this.performance = performance;
     /**
+     * @type {ConfigSet}
+     */
+    this.phpCoreConfigSet = phpCoreConfigSet;
+    /**
      * @type {Environment|null}
      */
     this.syncEnvironment = null;
@@ -62,10 +74,15 @@ _.extend(EnvironmentProvider.prototype, {
         var provider = this;
 
         if (provider.asyncEnvironment === null) {
-            provider.asyncEnvironment = provider.asyncRuntime.createEnvironment({
-                fileSystem: provider.fileSystem,
-                performance: provider.performance
-            });
+            provider.asyncEnvironment = provider.asyncRuntime.createEnvironment(
+                {
+                    fileSystem: provider.fileSystem,
+                    performance: provider.performance
+                },
+                // Fetch all plugins that may have been installed across all Uniter config-level presets
+                // and the root level config
+                provider.phpCoreConfigSet.concatArrays('plugins')
+            );
 
             provider.io.install(provider.asyncEnvironment);
         }
@@ -95,10 +112,15 @@ _.extend(EnvironmentProvider.prototype, {
         var provider = this;
 
         if (provider.syncEnvironment === null) {
-            provider.syncEnvironment = provider.syncRuntime.createEnvironment({
-                fileSystem: provider.fileSystem,
-                performance: provider.performance
-            });
+            provider.syncEnvironment = provider.syncRuntime.createEnvironment(
+                {
+                    fileSystem: provider.fileSystem,
+                    performance: provider.performance
+                },
+                // Fetch all plugins that may have been installed across all Uniter config-level presets
+                // and the root level config
+                provider.phpCoreConfigSet.concatArrays('plugins')
+            );
 
             provider.io.install(provider.syncEnvironment);
         }

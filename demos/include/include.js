@@ -1,7 +1,9 @@
 'use strict';
 
-require('../../register');
-
-require('./calculate_and_print.php')().execute().catch(function (error) {
-    console.error(error);
-});
+require('../../register')()
+    .then(function () {
+        return require('./calculate_and_print.php')().execute();
+    })
+    .catch(function (error) {
+        console.error(error);
+    });

@@ -11,8 +11,10 @@
 
 'use strict';
 
-var binaryName = require('path').basename(process.argv[1]).replace(/\.js$/, ''),
-    dotPHP = require('..'),
+var path = require('path'),
+    binaryName = path.basename(process.argv[1]).replace(/\.js$/, ''),
+    dotPHP,
+    dotPHPFactory = require('..'),
     filePath = null,
     fs = require('fs'),
     hasOwn = {}.hasOwnProperty,
@@ -69,6 +71,19 @@ function handleError(error) {
 }
 
 /**
+ * Loads the DotPHP service
+ *
+ * @param {string|null} contextDirectory
+ */
+function loadDotPHP(contextDirectory) {
+    if (contextDirectory) {
+        contextDirectory = path.dirname(contextDirectory);
+    }
+
+    dotPHP = dotPHPFactory.create(contextDirectory);
+}
+
+/**
  * Executes the collected PHP code
  *
  * @param {string} phpCode
@@ -92,6 +107,8 @@ function runPHP(phpCode) {
         // Synchronous mode
 
         try {
+            dotPHP.bootstrapSync();
+
             handleSuccess(dotPHP.evaluateSync(phpCode, filePath));
         } catch (error) {
             handleError(error);
@@ -99,7 +116,9 @@ function runPHP(phpCode) {
     } else {
         // Asynchronous (Promise-based) mode
 
-        dotPHP.evaluate(phpCode, filePath).then(function (resultValue) {
+        dotPHP.bootstrap().then(function () {
+            return dotPHP.evaluate(phpCode, filePath);
+        }).then(function (resultValue) {
             handleSuccess(resultValue);
 
             // PHP program did not explicitly exit, nothing to do
@@ -113,16 +132,15 @@ if (hasOwn.call(parsedOptions, 'run')) {
     // PHP has been given directly (without the `<?php` prefix) to be executed
 
     filePath = 'Command line code';
+    loadDotPHP(null); // Use CWD
 
     runPHP('<?php ' + parsedOptions.run);
 } else if (parsedOptions.file || parsedOptions._.length > 0) {
     // The path to a PHP file to execute has been given
+    filePath = fs.realpathSync(parsedOptions.file || parsedOptions._[0]);
 
-    filePath = parsedOptions.file || parsedOptions._[0];
-
-    fs.readFile(filePath, function (error, contentBuffer) {
-        runPHP(contentBuffer.toString());
-    });
+    loadDotPHP(filePath);
+    runPHP(fs.readFileSync(filePath).toString());
 } else if (hasOwn.call(parsedOptions, 'help')) {
     console.log([
         'Usage: ' + binaryName + ' <options> <path to PHP file>',
@@ -143,6 +161,7 @@ if (hasOwn.call(parsedOptions, 'run')) {
      */
 
     filePath = 'Standard input code';
+    loadDotPHP(null); // Use CWD
 
     dotPHP.readStdin().then(function (stdin) {
         runPHP(stdin);

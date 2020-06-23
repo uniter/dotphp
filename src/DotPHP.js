@@ -14,18 +14,35 @@ var _ = require('microdash'),
 
 /**
  * @param {RequireExtension} requireExtension
- * @param {Requirer} requirer
+ * @param {FileCompiler} fileCompiler
+ * @param {Bootstrapper} bootstrapper
  * @param {Evaluator} evaluator
  * @param {Transpiler} transpiler
  * @param {Function} jsBeautify Beautify NPM package
  * @param {StdinReader} stdinReader
  * @constructor
  */
-function DotPHP(requireExtension, requirer, evaluator, transpiler, jsBeautify, stdinReader) {
+function DotPHP(
+    requireExtension,
+    fileCompiler,
+    bootstrapper,
+    evaluator,
+    transpiler,
+    jsBeautify,
+    stdinReader
+) {
+    /**
+     * @type {Bootstrapper}
+     */
+    this.bootstrapper = bootstrapper;
     /**
      * @type {Evaluator}
      */
     this.evaluator = evaluator;
+    /**
+     * @type {FileCompiler}
+     */
+    this.fileCompiler = fileCompiler;
     /**
      * @type {Function}
      */
@@ -34,10 +51,6 @@ function DotPHP(requireExtension, requirer, evaluator, transpiler, jsBeautify, s
      * @type {RequireExtension}
      */
     this.requireExtension = requireExtension;
-    /**
-     * @type {Requirer}
-     */
-    this.requirer = requirer;
     /**
      * @type {StdinReader}
      */
@@ -49,6 +62,26 @@ function DotPHP(requireExtension, requirer, evaluator, transpiler, jsBeautify, s
 }
 
 _.extend(DotPHP.prototype, {
+    /**
+     * Requires any bootstrap file(s), if specified in config, in sequence (if multiple are provided).
+     * The returned promise will only be resolved once all have completed (or once the first module
+     * to reject has done so)
+     *
+     * @returns {Promise}
+     */
+    bootstrap: function () {
+        return this.bootstrapper.bootstrap();
+    },
+
+    /**
+     * Requires any bootstrap file(s), if specified in config, in sequence (if multiple are provided
+     *
+     * @throws {Error} Throws if requiring any of the configured bootstrap files results in an error
+     */
+    bootstrapSync: function () {
+        this.bootstrapper.bootstrapSync();
+    },
+
     /**
      * Executes and returns the result of the specified PHP code asynchronously
      *
@@ -84,29 +117,30 @@ _.extend(DotPHP.prototype, {
      * Registers the `.php` extension handler for Node
      *
      * @param {object} options
+     * @returns {Promise|null}
      */
     register: function (options) {
-        this.requireExtension.install(options);
+        return this.requireExtension.install(options);
     },
 
     /**
-     * Fetches a PHP module from its full/real path in asynchronous mode
+     * Fetches a PHP module factory from its full/real path in asynchronous mode
      *
      * @param {string} filePath
-     * @returns {Promise|Value}
+     * @returns {Function}
      */
     require: function (filePath) {
-        return this.requirer.require(filePath, Mode.asynchronous());
+        return this.fileCompiler.compile(filePath, Mode.asynchronous());
     },
 
     /**
-     * Fetches a PHP module from its full/real path in synchronous mode
+     * Fetches a PHP module factory from its full/real path in synchronous mode
      *
      * @param {string} filePath
-     * @returns {Promise|Value}
+     * @returns {Function}
      */
     requireSync: function (filePath) {
-        return this.requirer.require(filePath, Mode.synchronous());
+        return this.fileCompiler.compile(filePath, Mode.synchronous());
     },
 
     /**

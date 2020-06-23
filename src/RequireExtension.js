@@ -13,15 +13,20 @@ var _ = require('microdash'),
     Mode = require('./Mode');
 
 /**
- * @param {Requirer} requirer
+ * @param {FileCompiler} fileCompiler
+ * @param {Bootstrapper} bootstrapper
  * @param {Function} require
  * @constructor
  */
-function RequireExtension(requirer, require) {
+function RequireExtension(fileCompiler, bootstrapper, require) {
     /**
-     * @type {Requirer}
+     * @type {Bootstrapper}
      */
-    this.requirer = requirer;
+    this.bootstrapper = bootstrapper;
+    /**
+     * @type {FileCompiler}
+     */
+    this.fileCompiler = fileCompiler;
     /**
      * @type {Function}
      */
@@ -30,9 +35,12 @@ function RequireExtension(requirer, require) {
 
 _.extend(RequireExtension.prototype, {
     /**
-     * Installs this require(...) extension
+     * Installs this require(...) extension. In asynchronous mode, a Promise will be returned
+     * that will be fulfilled once the installation is complete (including execution of
+     * any bootstrap files). In synchronous mode, null will be returned
      *
      * @param {object} options
+     * @returns {Promise|null}
      */
     install: function (options) {
         var extension = this,
@@ -44,12 +52,26 @@ _.extend(RequireExtension.prototype, {
 
         sync = options.sync === true;
 
-        extension.require.extensions['.php'] = function (module, filePath) {
-            module.exports = extension.requirer.require(
-                filePath,
-                sync ? Mode.synchronous() : Mode.asynchronous()
-            );
-        };
+        function doInstall() {
+            // Install a handler for Node.js require() of files with ".php" extension,
+            // that compiles and executes PHP modules via Uniter
+            extension.require.extensions['.php'] = function (module, filePath) {
+                module.exports = extension.fileCompiler.compile(
+                    filePath,
+                    sync ? Mode.synchronous() : Mode.asynchronous()
+                );
+            };
+        }
+
+        if (sync) {
+            extension.bootstrapper.bootstrapSync();
+            doInstall();
+
+            return null;
+        }
+
+        return extension.bootstrapper.bootstrap()
+            .then(doInstall);
     }
 });
 
