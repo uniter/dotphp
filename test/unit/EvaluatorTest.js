@@ -94,7 +94,7 @@ describe('Evaluator', function () {
         it('should return a rejected promise when an error is thrown in asynchronous mode', function () {
             compiler.compile.throws(new Error('Bang'));
 
-            expect(evaluator.evaluate('<?php print "my program";', '/my/module.php', mode))
+            return expect(evaluator.evaluate('<?php print "my program";', '/my/module.php', mode))
                 .to.eventually.be.rejectedWith(Error, 'Bang');
         });
 
@@ -149,7 +149,7 @@ describe('Evaluator', function () {
             var phpError = new PHPError(PHPError.E_ERROR, 'Oh dear');
             compiler.compile.throws(phpError);
 
-            expect(evaluator.evaluate('<?php print "my program";', '/my/module.php', mode))
+            return expect(evaluator.evaluate('<?php print "my program";', '/my/module.php', mode))
                 .to.eventually.be.rejectedWith(phpError);
         });
     });

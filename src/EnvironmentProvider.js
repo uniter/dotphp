@@ -19,9 +19,17 @@ var _ = require('microdash');
  * @param {IO} io
  * @param {FileSystem} fileSystem
  * @param {Performance} performance
+ * @param {ConfigSet} phpCoreConfigSet
  * @constructor
  */
-function EnvironmentProvider(asyncRuntime, syncRuntime, io, fileSystem, performance) {
+function EnvironmentProvider(
+    asyncRuntime,
+    syncRuntime,
+    io,
+    fileSystem,
+    performance,
+    phpCoreConfigSet
+) {
     /**
      * @type {Environment|null}
      */
@@ -43,6 +51,10 @@ function EnvironmentProvider(asyncRuntime, syncRuntime, io, fileSystem, performa
      */
     this.performance = performance;
     /**
+     * @type {ConfigSet}
+     */
+    this.phpCoreConfigSet = phpCoreConfigSet;
+    /**
      * @type {Environment|null}
      */
     this.syncEnvironment = null;
@@ -59,13 +71,25 @@ _.extend(EnvironmentProvider.prototype, {
      * @returns {Environment}
      */
     getAsyncEnvironment: function () {
-        var provider = this;
+        var environmentOptions,
+            provider = this;
 
         if (provider.asyncEnvironment === null) {
-            provider.asyncEnvironment = provider.asyncRuntime.createEnvironment({
+            environmentOptions = Object.assign({}, provider.phpCoreConfigSet.mergeAll(), {
                 fileSystem: provider.fileSystem,
                 performance: provider.performance
             });
+
+            // Keep things simple by not passing the special "addons" list through as a config option
+            delete environmentOptions.addons;
+
+            provider.asyncEnvironment = provider.asyncRuntime.createEnvironment(
+                // Pass the non-addon config options through
+                environmentOptions,
+                // Fetch all addons that may have been installed across all Uniter platform-level plugins
+                // and the root level config
+                provider.phpCoreConfigSet.concatArrays('addons')
+            );
 
             provider.io.install(provider.asyncEnvironment);
         }
@@ -92,13 +116,25 @@ _.extend(EnvironmentProvider.prototype, {
      * @returns {Environment}
      */
     getSyncEnvironment: function () {
-        var provider = this;
+        var environmentOptions,
+            provider = this;
 
         if (provider.syncEnvironment === null) {
-            provider.syncEnvironment = provider.syncRuntime.createEnvironment({
+            environmentOptions = Object.assign({}, provider.phpCoreConfigSet.mergeAll(), {
                 fileSystem: provider.fileSystem,
                 performance: provider.performance
             });
+
+            // Keep things simple by not passing the special "addons" list through as a config option
+            delete environmentOptions.addons;
+
+            provider.syncEnvironment = provider.syncRuntime.createEnvironment(
+                // Pass the non-addon config options through
+                environmentOptions,
+                // Fetch all addons that may have been installed across all Uniter platform-level plugins
+                // and the root level config
+                provider.phpCoreConfigSet.concatArrays('addons')
+            );
 
             provider.io.install(provider.syncEnvironment);
         }

@@ -12,6 +12,7 @@
 var DotPHPFactory = require('./src/DotPHPFactory'),
     asyncRuntime = require('phpruntime/async'),
     fs = require('fs'),
+    configLoader = require('phpconfig').createConfigLoader(fs.existsSync),
     syncRuntime = require('phpruntime/sync');
 
-module.exports = new DotPHPFactory().create(fs, process, asyncRuntime, syncRuntime, require);
+module.exports = new DotPHPFactory(fs, process, configLoader, asyncRuntime, syncRuntime, require);

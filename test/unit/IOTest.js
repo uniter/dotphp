@@ -16,7 +16,8 @@ var expect = require('chai').expect,
     IO = require('../../src/IO');
 
 describe('IO', function () {
-    var environment,
+    var dotPHPConfigSet,
+        environment,
         io,
         phpStderr,
         phpStdout,
@@ -25,6 +26,9 @@ describe('IO', function () {
         stdout;
 
     beforeEach(function () {
+        dotPHPConfigSet = {
+            getBoolean: sinon.stub()
+        };
         environment = sinon.createStubInstance(Environment);
         phpStderr = new EventEmitter();
         phpStdout = new EventEmitter();
@@ -41,64 +45,96 @@ describe('IO', function () {
             stdout: stdout
         };
 
-        io = new IO(process);
+        dotPHPConfigSet.getBoolean
+            .withArgs('stdio', true)
+            .returns(true);
+
+        io = new IO(dotPHPConfigSet, process);
     });
 
     describe('install()', function () {
-        it('should install a listener that copies data from the PHP stdout to process stdout', function () {
-            io.install(environment);
+        describe('when stdio is enabled', function () {
+            it('should install a listener that copies data from the PHP stdout to process stdout', function () {
+                io.install(environment);
 
-            phpStdout.emit('data', 'some output');
+                phpStdout.emit('data', 'some output');
 
-            expect(process.stdout.write).to.have.been.calledOnce;
-            expect(process.stdout.write).to.have.been.calledWith('some output');
-            expect(process.stderr.write).not.to.have.been.called;
+                expect(process.stdout.write).to.have.been.calledOnce;
+                expect(process.stdout.write).to.have.been.calledWith('some output');
+                expect(process.stderr.write).not.to.have.been.called;
+            });
+
+            it('should install a listener that copies data from the PHP stderr to process stderr', function () {
+                io.install(environment);
+
+                phpStderr.emit('data', 'Bang! Something went wrong');
+
+                expect(process.stderr.write).to.have.been.calledOnce;
+                expect(process.stderr.write).to.have.been.calledWith('Bang! Something went wrong');
+                expect(process.stdout.write).not.to.have.been.called;
+            });
+
+            it('should install a stdout listener onto each different one provided', function () {
+                var secondPhpStderr = new EventEmitter(),
+                    secondPhpStdout = new EventEmitter(),
+                    secondEnvironment = sinon.createStubInstance(Environment);
+                secondEnvironment.getStdout.returns(secondPhpStdout);
+                secondEnvironment.getStderr.returns(secondPhpStderr);
+                io.install(environment);
+                io.install(secondEnvironment);
+
+                phpStdout.emit('data', 'first output');
+                secondPhpStdout.emit('data', 'second output');
+
+                expect(process.stdout.write).to.have.been.calledTwice;
+                expect(process.stdout.write).to.have.been.calledWith('first output');
+                expect(process.stdout.write).to.have.been.calledWith('second output');
+                expect(process.stderr.write).not.to.have.been.called;
+            });
+
+            it('should install a stderr listener onto each different one provided', function () {
+                var secondPhpStderr = new EventEmitter(),
+                    secondPhpStdout = new EventEmitter(),
+                    secondEnvironment = sinon.createStubInstance(Environment);
+                secondEnvironment.getStdout.returns(secondPhpStdout);
+                secondEnvironment.getStderr.returns(secondPhpStderr);
+                io.install(environment);
+                io.install(secondEnvironment);
+
+                phpStderr.emit('data', 'first warning');
+                secondPhpStderr.emit('data', 'second warning');
+
+                expect(process.stderr.write).to.have.been.calledTwice;
+                expect(process.stderr.write).to.have.been.calledWith('first warning');
+                expect(process.stderr.write).to.have.been.calledWith('second warning');
+                expect(process.stdout.write).not.to.have.been.called;
+            });
         });
 
-        it('should install a listener that copies data from the PHP stderr to process stderr', function () {
-            io.install(environment);
+        describe('when stdio is disabled in config', function () {
+            beforeEach(function () {
+                dotPHPConfigSet.getBoolean
+                    .withArgs('stdio', true)
+                    .returns(false);
+            });
 
-            phpStderr.emit('data', 'Bang! Something went wrong');
+            it('should not install a listener that copies data from the PHP stdout', function () {
+                io.install(environment);
 
-            expect(process.stderr.write).to.have.been.calledOnce;
-            expect(process.stderr.write).to.have.been.calledWith('Bang! Something went wrong');
-            expect(process.stdout.write).not.to.have.been.called;
-        });
+                phpStdout.emit('data', 'some output');
 
-        it('should install a stdout listener onto each different one provided', function () {
-            var secondPhpStderr = new EventEmitter(),
-                secondPhpStdout = new EventEmitter(),
-                secondEnvironment = sinon.createStubInstance(Environment);
-            secondEnvironment.getStdout.returns(secondPhpStdout);
-            secondEnvironment.getStderr.returns(secondPhpStderr);
-            io.install(environment);
-            io.install(secondEnvironment);
+                expect(process.stdout.write).not.to.have.been.called;
+                expect(process.stderr.write).not.to.have.been.called;
+            });
 
-            phpStdout.emit('data', 'first output');
-            secondPhpStdout.emit('data', 'second output');
+            it('should not install a listener that copies data from the PHP stderr', function () {
+                io.install(environment);
 
-            expect(process.stdout.write).to.have.been.calledTwice;
-            expect(process.stdout.write).to.have.been.calledWith('first output');
-            expect(process.stdout.write).to.have.been.calledWith('second output');
-            expect(process.stderr.write).not.to.have.been.called;
-        });
+                phpStderr.emit('data', 'Bang! Something went wrong');
 
-        it('should install a stderr listener onto each different one provided', function () {
-            var secondPhpStderr = new EventEmitter(),
-                secondPhpStdout = new EventEmitter(),
-                secondEnvironment = sinon.createStubInstance(Environment);
-            secondEnvironment.getStdout.returns(secondPhpStdout);
-            secondEnvironment.getStderr.returns(secondPhpStderr);
-            io.install(environment);
-            io.install(secondEnvironment);
-
-            phpStderr.emit('data', 'first warning');
-            secondPhpStderr.emit('data', 'second warning');
-
-            expect(process.stderr.write).to.have.been.calledTwice;
-            expect(process.stderr.write).to.have.been.calledWith('first warning');
-            expect(process.stderr.write).to.have.been.calledWith('second warning');
-            expect(process.stdout.write).not.to.have.been.called;
+                expect(process.stdout.write).not.to.have.been.called;
+                expect(process.stderr.write).not.to.have.been.called;
+            });
         });
     });
 });

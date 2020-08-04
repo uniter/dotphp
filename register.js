@@ -9,4 +9,19 @@
 
 'use strict';
 
-require('.').register();
+var path = require('path'),
+    // Use the directory of the entrypoint script as the context
+    contextDirectory = path.dirname(process.mainModule.filename),
+
+    dotPHP = require('.').create(contextDirectory);
+
+/**
+ * Installs PHP support into the current Node.js environment,
+ * hooking require(...) to support loading files with ".php" extension
+ *
+ * @param {Object=} options
+ * @return {Promise|null}
+ */
+module.exports = function (options) {
+    return dotPHP.register(options);
+};

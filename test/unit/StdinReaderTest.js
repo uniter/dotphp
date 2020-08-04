@@ -46,12 +46,22 @@ describe('StdinReader', function () {
         });
 
         it('should set the stream encoding to UTF-8', function () {
+            if (!('readableEncoding' in stdin)) {
+                // Only added in Node.js v12.7.0
+                this.skip();
+            }
+
             reader.read();
 
             expect(stdin.readableEncoding).to.equal('utf8');
         });
 
         it('should resume the stream', function () {
+            if (!('readableEncoding' in stdin)) {
+                // Only added in Node.js v9.4.0
+                this.skip();
+            }
+
             reader.read();
 
             expect(stdin.readableFlowing).to.be.true;

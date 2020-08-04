@@ -20,7 +20,7 @@ describe('Module require extension integration', function () {
 
     describe('after installing the require(...) extension', function () {
         beforeEach(function () {
-            this.dotPHP.register();
+            return this.dotPHP.register();
         });
 
         it('should correctly require a PHP module that just returns 21', function () {

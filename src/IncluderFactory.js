@@ -13,13 +13,18 @@ var _ = require('microdash');
 
 /**
  * @param {fs} fs
+ * @param {PathMapper} pathMapper
  * @constructor
  */
-function IncluderFactory(fs) {
+function IncluderFactory(fs, pathMapper) {
     /**
      * @type {fs}
      */
     this.fs = fs;
+    /**
+     * @type {PathMapper}
+     */
+    this.pathMapper = pathMapper;
 }
 
 _.extend(IncluderFactory.prototype, {
@@ -43,12 +48,13 @@ _.extend(IncluderFactory.prototype, {
         function includer(filePath, promise) {
             var moduleFactory,
                 phpCode,
-                realPath = fileSystem.realPath(filePath);
+                realPath = fileSystem.realPath(filePath),
+                effectiveRealPath = factory.pathMapper.map(realPath);
 
             try {
-                phpCode = factory.fs.readFileSync(realPath).toString();
+                phpCode = factory.fs.readFileSync(effectiveRealPath).toString();
             } catch (error) {
-                promise.reject('File "' + realPath + '" could not be read: ' + error.toString());
+                promise.reject('File "' + effectiveRealPath + '" could not be read: ' + error.toString());
                 return;
             }
 

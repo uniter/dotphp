@@ -14,9 +14,11 @@ var _ = require('microdash');
 /**
  * @param {Parser} phpParser
  * @param {PHPToJS} phpToJS
+ * @param {Object} transpilerConfig
+ * @param {Object} phpToJSConfig
  * @constructor
  */
-function Transpiler(phpParser, phpToJS) {
+function Transpiler(phpParser, phpToJS, transpilerConfig, phpToJSConfig) {
     /**
      * @type {Parser}
      */
@@ -25,6 +27,14 @@ function Transpiler(phpParser, phpToJS) {
      * @type {PHPToJS}
      */
     this.phpToJS = phpToJS;
+    /**
+     * @type {Object}
+     */
+    this.phpToJSConfig = phpToJSConfig;
+    /**
+     * @type {Object}
+     */
+    this.transpilerConfig = transpilerConfig;
 }
 
 _.extend(Transpiler.prototype, {
@@ -48,14 +58,19 @@ _.extend(Transpiler.prototype, {
 
         return transpiler.phpToJS.transpile(
             phpAST,
-            {
-                lineNumbers: true,
-                path: filePath,
-                sourceMap: {
-                    sourceContent: phpCode
+            _.extend(
+                {
+                    lineNumbers: true,
+                    path: filePath,
+                    sourceMap: {
+                        sourceContent: phpCode
+                    },
+                    sync: mode.isSynchronous()
                 },
-                sync: mode.isSynchronous()
-            }
+                transpiler.phpToJSConfig
+            ),
+            // Any custom rules etc. will need to be specified here instead
+            transpiler.transpilerConfig
         );
     }
 });

@@ -16,30 +16,24 @@ var _ = require('microdash');
  * @param {Compiler} compiler
  * @constructor
  */
-function Requirer(fs, compiler) {
+function Requirer(fileCompiler) {
     /**
-     * @type {Compiler}
+     * @type {FileCompiler}
      */
-    this.compiler = compiler;
-    /**
-     * @type {fs}
-     */
-    this.fs = fs;
+    this.fileCompiler = fileCompiler;
 }
 
 _.extend(Requirer.prototype, {
     /**
-     * Requires, executes and returns the result of the specified PHP file
+     * Requires, executes and returns the result of the specified PHP file (in synchronous mode)
+     * or a promise to be resolved with its result (in asynchronous mode)
      *
      * @param {string} filePath
      * @param {Mode} mode
-     * @return {Function}
+     * @returns {Promise|Value}
      */
     require: function (filePath, mode) {
-        var requirer = this,
-            phpCode = requirer.fs.readFileSync(filePath).toString();
-
-        return requirer.compiler.compile(phpCode, filePath, mode);
+        return this.fileCompiler.compile(filePath, mode)().execute();
     }
 });
 

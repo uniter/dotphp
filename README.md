@@ -1,7 +1,7 @@
 DotPHP
 ======
 
-[![Build Status](https://secure.travis-ci.org/uniter/dotphp.png?branch=master)](http://travis-ci.org/uniter/dotphp)
+[![Build Status](https://github.com/uniter/dotphp/workflows/CI/badge.svg)](https://github.com/uniter/dotphp/actions?query=workflow%3ACI)
 
 Require PHP files from Node.js with [Uniter](https://github.com/asmblah/uniter).
 

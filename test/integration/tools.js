@@ -9,13 +9,20 @@
 
 'use strict';
 
-var sinon = require('sinon'),
+var fs = require('fs'),
+    sinon = require('sinon'),
     DotPHPFactory = require('../../src/DotPHPFactory'),
     asyncRuntime = require('phpruntime'),
+    phpConfigLoader = require('phpconfig').createConfigLoader(fs.existsSync),
     syncRuntime = require('phpruntime/sync');
 
 module.exports = {
-    init: function () {
+    /**
+     * Initialises an integration test environment
+     *
+     * @param {string=} contextDirectory
+     */
+    init: function (contextDirectory) {
         this.fs = {
             readFileSync: sinon.stub(),
             realpathSync: sinon.stub().returnsArg(0)
@@ -47,12 +54,13 @@ module.exports = {
         this.require.withArgs('phpruntime').returns(asyncRuntime);
         this.require.withArgs('phpruntime/sync').returns(syncRuntime);
 
-        this.dotPHP = new DotPHPFactory().create(
+        this.dotPHP = new DotPHPFactory(
             this.fs,
             this.process,
+            phpConfigLoader,
             asyncRuntime,
             syncRuntime,
             this.require
-        );
+        ).create(contextDirectory);
     }
 };
