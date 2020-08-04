@@ -62,8 +62,9 @@ describe('DotPHP integration tests to sanity check correct operation of the demo
                     return;
                 }
 
-                expect(stdout).to.contain('demos/plugin/call_plugin.php.\nHello via plugin!');
                 expect(stdout).to.contain('I replace replaced_module.php!');
+                expect(stdout).to.contain('demos/plugin/call_addon.php.\nHello via plugin!');
+                expect(stdout).to.contain('Binding option: my binding option value');
                 expect(stderr).to.equal('');
                 expect(error).to.be.null;
                 done();

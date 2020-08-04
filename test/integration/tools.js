@@ -9,10 +9,11 @@
 
 'use strict';
 
-var sinon = require('sinon'),
+var fs = require('fs'),
+    sinon = require('sinon'),
     DotPHPFactory = require('../../src/DotPHPFactory'),
     asyncRuntime = require('phpruntime'),
-    phpConfig = require('phpconfig').default,
+    phpConfigLoader = require('phpconfig').createConfigLoader(fs.existsSync),
     syncRuntime = require('phpruntime/sync');
 
 module.exports = {
@@ -56,7 +57,7 @@ module.exports = {
         this.dotPHP = new DotPHPFactory(
             this.fs,
             this.process,
-            phpConfig,
+            phpConfigLoader,
             asyncRuntime,
             syncRuntime,
             this.require

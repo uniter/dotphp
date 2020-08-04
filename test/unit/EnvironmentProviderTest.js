@@ -71,12 +71,66 @@ describe('EnvironmentProvider', function () {
             });
         });
 
-        it('should create the Environment with the combined plugins from the PHPCore config set', function () {
+        it('should pass any options through from the config', function () {
             phpCoreConfigSet.concatArrays
-                .withArgs('plugins')
+                .withArgs('addons')
+                .returns([]);
+            phpCoreConfigSet.mergeAll
+                .returns({
+                    myOption: 'my value'
+                });
+
+            provider.getAsyncEnvironment();
+
+            expect(asyncRuntime.createEnvironment).to.have.been.calledOnce;
+            expect(asyncRuntime.createEnvironment).to.have.been.calledWith(sinon.match({
+                myOption: 'my value'
+            }));
+        });
+
+        it('should remove any addons from the options config', function () {
+            phpCoreConfigSet.concatArrays
+                .withArgs('addons')
+                .returns([{'addon': 'one'}]);
+            phpCoreConfigSet.mergeAll
+                .returns({
+                    addons: [{'addon': 'one'}],
+                    myOption: 'my value'
+                });
+
+            provider.getAsyncEnvironment();
+
+            expect(asyncRuntime.createEnvironment).to.have.been.calledOnce;
+            expect(asyncRuntime.createEnvironment).to.have.been.calledWith(sinon.match(function (options) {
+                return !{}.hasOwnProperty.call(options, 'addons');
+            }));
+        });
+
+        it('should create the Environment with any provided addons', function () {
+            phpCoreConfigSet.concatArrays
+                .withArgs('addons')
+                .returns([{'addon': 'one'}]);
+            phpCoreConfigSet.mergeAll
+                .returns({
+                    addons: [{'addon': 'one'}],
+                    myOption: 'my value'
+                });
+
+            provider.getAsyncEnvironment();
+
+            expect(asyncRuntime.createEnvironment).to.have.been.calledOnce;
+            expect(asyncRuntime.createEnvironment).to.have.been.calledWith(
+                sinon.match.any,
+                [{'addon': 'one'}]
+            );
+        });
+
+        it('should create the Environment with the combined addons from the PHPCore config set', function () {
+            phpCoreConfigSet.concatArrays
+                .withArgs('addons')
                 .returns([
-                    {'my': 'first plugin'},
-                    {'my': 'second plugin'}
+                    {'my': 'first addon'},
+                    {'my': 'second addon'}
                 ]);
 
             provider.getAsyncEnvironment();
@@ -85,8 +139,8 @@ describe('EnvironmentProvider', function () {
             expect(asyncRuntime.createEnvironment).to.have.been.calledWith(
                 sinon.match.any,
                 [
-                    {'my': 'first plugin'},
-                    {'my': 'second plugin'}
+                    {'my': 'first addon'},
+                    {'my': 'second addon'}
                 ]
             );
         });
@@ -132,12 +186,12 @@ describe('EnvironmentProvider', function () {
                 });
             });
 
-            it('should create the Environment with the combined plugins from the PHPCore config set', function () {
+            it('should create the Environment with the combined addons from the PHPCore config set', function () {
                 phpCoreConfigSet.concatArrays
-                    .withArgs('plugins')
+                    .withArgs('addons')
                     .returns([
-                        {'my': 'first plugin'},
-                        {'my': 'second plugin'}
+                        {'my': 'first addon'},
+                        {'my': 'second addon'}
                     ]);
 
                 provider.getEnvironmentForMode(mode);
@@ -146,8 +200,8 @@ describe('EnvironmentProvider', function () {
                 expect(asyncRuntime.createEnvironment).to.have.been.calledWith(
                     sinon.match.any,
                     [
-                        {'my': 'first plugin'},
-                        {'my': 'second plugin'}
+                        {'my': 'first addon'},
+                        {'my': 'second addon'}
                     ]
                 );
             });
@@ -192,12 +246,12 @@ describe('EnvironmentProvider', function () {
                 });
             });
 
-            it('should create the Environment with the combined plugins from the PHPCore config set', function () {
+            it('should create the Environment with the combined addons from the PHPCore config set', function () {
                 phpCoreConfigSet.concatArrays
-                    .withArgs('plugins')
+                    .withArgs('addons')
                     .returns([
-                        {'my': 'first plugin'},
-                        {'my': 'second plugin'}
+                        {'my': 'first addon'},
+                        {'my': 'second addon'}
                     ]);
 
                 provider.getEnvironmentForMode(mode);
@@ -206,8 +260,8 @@ describe('EnvironmentProvider', function () {
                 expect(syncRuntime.createEnvironment).to.have.been.calledWith(
                     sinon.match.any,
                     [
-                        {'my': 'first plugin'},
-                        {'my': 'second plugin'}
+                        {'my': 'first addon'},
+                        {'my': 'second addon'}
                     ]
                 );
             });
@@ -247,12 +301,66 @@ describe('EnvironmentProvider', function () {
             });
         });
 
-        it('should create the Environment with the combined plugins from the PHPCore config set', function () {
+        it('should pass any options through from the config', function () {
             phpCoreConfigSet.concatArrays
-                .withArgs('plugins')
+                .withArgs('addons')
+                .returns([]);
+            phpCoreConfigSet.mergeAll
+                .returns({
+                    myOption: 'my value'
+                });
+
+            provider.getSyncEnvironment();
+
+            expect(syncRuntime.createEnvironment).to.have.been.calledOnce;
+            expect(syncRuntime.createEnvironment).to.have.been.calledWith(sinon.match({
+                myOption: 'my value'
+            }));
+        });
+
+        it('should remove any addons from the options config', function () {
+            phpCoreConfigSet.concatArrays
+                .withArgs('addons')
+                .returns([{'addon': 'one'}]);
+            phpCoreConfigSet.mergeAll
+                .returns({
+                    addons: [{'addon': 'one'}],
+                    myOption: 'my value'
+                });
+
+            provider.getSyncEnvironment();
+
+            expect(syncRuntime.createEnvironment).to.have.been.calledOnce;
+            expect(syncRuntime.createEnvironment).to.have.been.calledWith(sinon.match(function (options) {
+                return !{}.hasOwnProperty.call(options, 'addons');
+            }));
+        });
+
+        it('should create the Environment with any provided addons', function () {
+            phpCoreConfigSet.concatArrays
+                .withArgs('addons')
+                .returns([{'addon': 'one'}]);
+            phpCoreConfigSet.mergeAll
+                .returns({
+                    addons: [{'addon': 'one'}],
+                    myOption: 'my value'
+                });
+
+            provider.getSyncEnvironment();
+
+            expect(syncRuntime.createEnvironment).to.have.been.calledOnce;
+            expect(syncRuntime.createEnvironment).to.have.been.calledWith(
+                sinon.match.any,
+                [{'addon': 'one'}]
+            );
+        });
+
+        it('should create the Environment with the combined addons from the PHPCore config set', function () {
+            phpCoreConfigSet.concatArrays
+                .withArgs('addons')
                 .returns([
-                    {'my': 'first plugin'},
-                    {'my': 'second plugin'}
+                    {'my': 'first addon'},
+                    {'my': 'second addon'}
                 ]);
 
             provider.getSyncEnvironment();
@@ -261,8 +369,8 @@ describe('EnvironmentProvider', function () {
             expect(syncRuntime.createEnvironment).to.have.been.calledWith(
                 sinon.match.any,
                 [
-                    {'my': 'first plugin'},
-                    {'my': 'second plugin'}
+                    {'my': 'first addon'},
+                    {'my': 'second addon'}
                 ]
             );
         });

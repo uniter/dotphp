@@ -12,10 +12,15 @@
 var _ = require('microdash');
 
 /**
+ * @param {ConfigSet} dotPHPConfigSet
  * @param {Process} process
  * @constructor
  */
-function IO(process) {
+function IO(dotPHPConfigSet, process) {
+    /**
+     * @type {ConfigSet}
+     */
+    this.dotPHPConfigSet = dotPHPConfigSet;
     /**
      * @type {Process}
      */
@@ -30,6 +35,11 @@ _.extend(IO.prototype, {
      */
     install: function (environment) {
         var io = this;
+
+        if (io.dotPHPConfigSet.getBoolean('stdio', true) === false) {
+            // Standard I/O has been disabled in config - nothing to do
+            return;
+        }
 
         environment.getStdout().on('data', function (data) {
             io.process.stdout.write(data);

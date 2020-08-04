@@ -37,7 +37,7 @@ var _ = require('microdash'),
  *
  * @param {fs} fs
  * @param {Process} process
- * @param {PHPConfig} phpConfig
+ * @param {ConfigLoaderInterface} configLoader
  * @param {Runtime} asyncRuntime
  * @param {Runtime} syncRuntime
  * @param {Function} require
@@ -46,7 +46,7 @@ var _ = require('microdash'),
 function DotPHPFactory(
     fs,
     process,
-    phpConfig,
+    configLoader,
     asyncRuntime,
     syncRuntime,
     require
@@ -56,13 +56,13 @@ function DotPHPFactory(
      */
     this.asyncRuntime = asyncRuntime;
     /**
+     * @type {ConfigLoaderInterface}
+     */
+    this.configLoader = configLoader;
+    /**
      * @type {fs}
      */
     this.fs = fs;
-    /**
-     * @type {PHPConfig}
-     */
-    this.phpConfig = phpConfig;
     /**
      * @type {Process}
      */
@@ -86,7 +86,7 @@ _.extend(DotPHPFactory.prototype, {
      */
     create: function (contextDirectory) {
         var factory = this,
-            uniterConfig = factory.phpConfig.getConfig(
+            uniterConfig = factory.configLoader.getConfig(
                 contextDirectory ?
                     [contextDirectory, factory.process.cwd()] :
                     [factory.process.cwd()]
@@ -108,7 +108,7 @@ _.extend(DotPHPFactory.prototype, {
             ),
             streamFactory = new StreamFactory(Stream, factory.fs),
             fileSystem = new FileSystem(factory.fs, streamFactory, factory.process),
-            io = new IO(factory.process),
+            io = new IO(dotPHPConfigSet, factory.process),
             performance = new Performance(microtime),
             environmentProvider = new EnvironmentProvider(
                 factory.asyncRuntime,
