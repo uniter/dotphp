@@ -33,10 +33,9 @@ _.extend(IncluderFactory.prototype, {
      *
      * @param {Compiler} compiler
      * @param {FileSystem} fileSystem
-     * @param {Mode} mode
      * @returns {function}
      */
-    create: function (compiler, fileSystem, mode) {
+    create: function (compiler, fileSystem) {
         var factory = this;
 
         /**
@@ -58,7 +57,7 @@ _.extend(IncluderFactory.prototype, {
                 return;
             }
 
-            moduleFactory = compiler.compile(phpCode, realPath, mode);
+            moduleFactory = compiler.compile(phpCode, realPath);
 
             promise.resolve(moduleFactory);
         }

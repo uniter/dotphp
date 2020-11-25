@@ -17,9 +17,10 @@ var _ = require('microdash'),
 /**
  * @param {Compiler} compiler
  * @param {EnvironmentProvider} environmentProvider
+ * @param {string} mode
  * @constructor
  */
-function Evaluator(compiler, environmentProvider) {
+function Evaluator(compiler, environmentProvider, mode) {
     /**
      * @type {Compiler}
      */
@@ -28,6 +29,10 @@ function Evaluator(compiler, environmentProvider) {
      * @type {EnvironmentProvider}
      */
     this.environmentProvider = environmentProvider;
+    /**
+     * @type {string}
+     */
+    this.mode = mode;
 }
 
 _.extend(Evaluator.prototype, {
@@ -36,19 +41,18 @@ _.extend(Evaluator.prototype, {
      *
      * @param {string} phpCode PHP file's source code as a string
      * @param {string|null} filePath Absolute path to the file being evaluated
-     * @param {Mode} mode
      * @returns {Promise|Value}
      */
-    evaluate: function (phpCode, filePath, mode) {
+    evaluate: function (phpCode, filePath) {
         var evaluator = this,
-            environment = evaluator.environmentProvider.getEnvironmentForMode(mode),
+            environment = evaluator.environmentProvider.getEnvironment(),
             compiledModule,
             phpEngine,
             resultValueOrPromise;
 
         try {
             try {
-                compiledModule = evaluator.compiler.compile(phpCode, filePath, mode);
+                compiledModule = evaluator.compiler.compile(phpCode, filePath);
             } catch (parseTranspileError) {
                 if (parseTranspileError instanceof PHPError) {
                     // Report parser or transpiler errors via PHPCore,
@@ -64,12 +68,12 @@ _.extend(Evaluator.prototype, {
 
             return resultValueOrPromise;
         } catch (error) {
-            if (mode.isSynchronous()) {
+            if (evaluator.mode === 'sync') {
                 // Synchronous mode: allow the error to bubble up the call stack
                 throw error;
             }
 
-            // Asynchronous mode: for API consistency, still return a Promise but reject it
+            // Asynchronous or Promise-synchronous mode: for API consistency, still return a Promise but reject it
             return Promise.reject(error);
         }
     }

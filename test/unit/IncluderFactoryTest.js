@@ -14,7 +14,6 @@ var expect = require('chai').expect,
     Compiler = require('../../src/Compiler'),
     FileSystem = require('../../src/FileSystem'),
     IncluderFactory = require('../../src/IncluderFactory'),
-    Mode = require('../../src/Mode'),
     PathMapper = require('../../src/PathMapper');
 
 describe('IncluderFactory', function () {
@@ -22,7 +21,6 @@ describe('IncluderFactory', function () {
         fileSystem,
         fs,
         includerFactory,
-        mode,
         moduleFactory,
         pathMapper,
         promise,
@@ -35,7 +33,6 @@ describe('IncluderFactory', function () {
         fs = {
             readFileSync: sinon.stub().returns({toString: sinon.stub().returns('/* My original PHP */')})
         };
-        mode = sinon.createStubInstance(Mode);
         moduleFactory = sinon.stub();
         resolve = sinon.stub();
         reject = sinon.stub();
@@ -62,7 +59,7 @@ describe('IncluderFactory', function () {
 
         beforeEach(function () {
             callCreate = function () {
-                includer = includerFactory.create(compiler, fileSystem, mode);
+                includer = includerFactory.create(compiler, fileSystem);
             };
         });
 

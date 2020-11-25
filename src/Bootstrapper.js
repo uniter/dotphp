@@ -9,8 +9,7 @@
 
 'use strict';
 
-var _ = require('microdash'),
-    Mode = require('./Mode');
+var _ = require('microdash');
 
 /**
  * @param {Requirer} requirer
@@ -37,8 +36,7 @@ _.extend(Bootstrapper.prototype, {
      * @returns {Promise}
      */
     bootstrap: function () {
-        var bootstrapper = this,
-            mode = Mode.asynchronous();
+        var bootstrapper = this;
 
         return new Promise(function (resolve, reject) {
             var remainingBootstraps;
@@ -59,24 +57,9 @@ _.extend(Bootstrapper.prototype, {
                 bootstrapFilePath = remainingBootstraps.shift();
 
                 bootstrapper.requirer
-                    .require(bootstrapFilePath, mode)
+                    .require(bootstrapFilePath)
                     .then(deQueue, reject);
             })();
-        });
-    },
-
-    /**
-     * Requires any bootstrap file(s), if specified in config, in sequence (if multiple are provided).
-     *
-     * @throws {Error} Throws if requiring any of the configured bootstrap files results in an error
-     */
-    bootstrapSync: function () {
-        var bootstrapper = this,
-            mode = Mode.synchronous();
-
-        // An array of file paths was given - require them in sequence
-        bootstrapper.bootstraps.forEach(function (bootstrapFilePath) {
-            bootstrapper.requirer.require(bootstrapFilePath, mode);
         });
     }
 });

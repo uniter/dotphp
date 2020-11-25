@@ -29,11 +29,10 @@ _.extend(Requirer.prototype, {
      * or a promise to be resolved with its result (in asynchronous mode)
      *
      * @param {string} filePath
-     * @param {Mode} mode
      * @returns {Promise|Value}
      */
-    require: function (filePath, mode) {
-        return this.fileCompiler.compile(filePath, mode)().execute();
+    require: function (filePath) {
+        return this.fileCompiler.compile(filePath)().execute();
     }
 });
 

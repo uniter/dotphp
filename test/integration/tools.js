@@ -12,8 +12,9 @@
 var fs = require('fs'),
     sinon = require('sinon'),
     DotPHPFactory = require('../../src/DotPHPFactory'),
-    asyncRuntime = require('phpruntime'),
+    asyncRuntime = require('phpruntime/async'),
     phpConfigLoader = require('phpconfig').createConfigLoader(fs.existsSync),
+    psyncRuntime = require('phpruntime/psync'),
     syncRuntime = require('phpruntime/sync');
 
 module.exports = {
@@ -52,6 +53,7 @@ module.exports = {
         this.require = sinon.stub();
         this.require.extensions = {};
         this.require.withArgs('phpruntime').returns(asyncRuntime);
+        this.require.withArgs('phpruntime/psync').returns(psyncRuntime);
         this.require.withArgs('phpruntime/sync').returns(syncRuntime);
 
         this.dotPHP = new DotPHPFactory(
@@ -59,6 +61,7 @@ module.exports = {
             this.process,
             phpConfigLoader,
             asyncRuntime,
+            psyncRuntime,
             syncRuntime,
             this.require
         ).create(contextDirectory);

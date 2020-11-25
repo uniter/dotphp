@@ -13,9 +13,9 @@ var expect = require('chai').expect,
     sinon = require('sinon'),
     tools = require('./tools');
 
-describe('Module require extension integration', function () {
+describe('Module require extension integration - asynchronous mode', function () {
     beforeEach(function () {
-        tools.init.call(this);
+        tools.init.call(this, __dirname + '/fixtures/async');
     });
 
     describe('after installing the require(...) extension', function () {

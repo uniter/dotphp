@@ -39,6 +39,7 @@ var _ = require('microdash'),
  * @param {Process} process
  * @param {ConfigLoaderInterface} configLoader
  * @param {Runtime} asyncRuntime
+ * @param {Runtime} psyncRuntime
  * @param {Runtime} syncRuntime
  * @param {Function} require
  * @constructor
@@ -48,6 +49,7 @@ function DotPHPFactory(
     process,
     configLoader,
     asyncRuntime,
+    psyncRuntime,
     syncRuntime,
     require
 ) {
@@ -67,6 +69,10 @@ function DotPHPFactory(
      * @type {Process}
      */
     this.process = process;
+    /**
+     * @type {Runtime}
+     */
+    this.psyncRuntime = psyncRuntime;
     /**
      * @type {Function}
      */
@@ -92,6 +98,33 @@ _.extend(DotPHPFactory.prototype, {
                     [factory.process.cwd()]
             ),
             dotPHPConfigSet = uniterConfig.getConfigsForLibrary('dotphp'),
+            phpToJSConfigSet = uniterConfig.getConfigsForLibrary('dotphp', 'phptojs'),
+            getMode = function (config) {
+                if (config.mode && config.sync) {
+                    throw new Error('Only one of "mode" and "sync" options should be specified');
+                }
+
+                if (config.sync) {
+                    return 'sync';
+                }
+
+                if (!config.mode) {
+                    return 'async';
+                }
+
+                switch (config.mode) {
+                    case 'async':
+                    case null: // Deliberate fall-through
+                    case undefined:
+                        return 'async';
+                    case 'psync':
+                    case 'sync':
+                        return config.mode;
+                    default:
+                        throw new Error('Invalid synchronicity mode "' + config.mode + '"');
+                }
+            },
+            mode = getMode(phpToJSConfigSet.mergeAll()),
             pathMapper = new PathMapper(dotPHPConfigSet.mergeObjects('map')),
             transpiler = new Transpiler(
                 phpToAST.create(null, _.extend(
@@ -103,8 +136,8 @@ _.extend(DotPHPFactory.prototype, {
                 phpToJS,
                 uniterConfig.getConfigsForLibrary('dotphp', 'transpiler')
                     .mergeUniqueObjects(),
-                uniterConfig.getConfigsForLibrary('dotphp', 'phptojs')
-                    .mergeUniqueObjects()
+                phpToJSConfigSet.mergeUniqueObjects(),
+                mode
             ),
             streamFactory = new StreamFactory(Stream, factory.fs),
             fileSystem = new FileSystem(factory.fs, streamFactory, factory.process),
@@ -112,11 +145,13 @@ _.extend(DotPHPFactory.prototype, {
             performance = new Performance(microtime),
             environmentProvider = new EnvironmentProvider(
                 factory.asyncRuntime,
+                factory.psyncRuntime,
                 factory.syncRuntime,
                 io,
                 fileSystem,
                 performance,
-                uniterConfig.getConfigsForLibrary('dotphp', 'phpcore')
+                uniterConfig.getConfigsForLibrary('dotphp', 'phpcore'),
+                mode
             ),
             compiler = new Compiler(
                 transpiler,
@@ -125,7 +160,7 @@ _.extend(DotPHPFactory.prototype, {
                 environmentProvider,
                 fileSystem
             ),
-            evaluator = new Evaluator(compiler, environmentProvider),
+            evaluator = new Evaluator(compiler, environmentProvider, mode),
             fileCompiler = new FileCompiler(factory.fs, pathMapper, compiler),
             requirer = new Requirer(fileCompiler),
             bootstrapper = new Bootstrapper(requirer, dotPHPConfigSet.concatArrays('bootstraps')),
@@ -136,7 +171,8 @@ _.extend(DotPHPFactory.prototype, {
                 evaluator,
                 transpiler,
                 jsBeautify.js_beautify,
-                new StdinReader(factory.process.stdin)
+                new StdinReader(factory.process.stdin),
+                mode
             );
 
         return dotPHP;

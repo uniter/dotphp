@@ -19,9 +19,8 @@ var path = require('path'),
  * Installs PHP support into the current Node.js environment,
  * hooking require(...) to support loading files with ".php" extension
  *
- * @param {Object=} options
  * @return {Promise|null}
  */
-module.exports = function (options) {
-    return dotPHP.register(options);
+module.exports = function () {
+    return dotPHP.register();
 };

@@ -12,7 +12,7 @@
 var _ = require('microdash');
 
 /**
- * @param {fs} FS module
+ * @param {fs} fs FS module
  * @param {PathMapper} pathMapper
  * @param {Compiler} compiler
  * @constructor
@@ -37,15 +37,14 @@ _.extend(FileCompiler.prototype, {
      * Reads and compiles the specified PHP file to a module factory
      *
      * @param {string} filePath
-     * @param {Mode} mode
      * @returns {Function}
      */
-    compile: function (filePath, mode) {
+    compile: function (filePath) {
         var requirer = this,
             effectiveFilePath = requirer.pathMapper.map(filePath),
             phpCode = requirer.fs.readFileSync(effectiveFilePath).toString();
 
-        return requirer.compiler.compile(phpCode, filePath, mode);
+        return requirer.compiler.compile(phpCode, filePath);
     }
 });
 

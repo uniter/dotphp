@@ -15,7 +15,7 @@ var expect = require('chai').expect,
 
 describe('DotPHP .require(...) integration - asynchronous module require', function () {
     beforeEach(function () {
-        tools.init.call(this);
+        tools.init.call(this, __dirname + '/fixtures/async');
     });
 
     it('should correctly require a PHP module that just returns 21', function () {

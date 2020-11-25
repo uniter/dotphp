@@ -12,9 +12,9 @@
 var expect = require('chai').expect,
     tools = require('./tools');
 
-describe('DotPHP .evaluate(...) integration - asynchronous PHP evaluation', function () {
+describe('DotPHP .evaluate(...) integration - Promise-synchronous PHP evaluation', function () {
     beforeEach(function () {
-        tools.init.call(this, __dirname + '/fixtures/async');
+        tools.init.call(this, __dirname + '/fixtures/psync');
     });
 
     it('should correctly evaluate a program with a simple top-level return statement', function () {

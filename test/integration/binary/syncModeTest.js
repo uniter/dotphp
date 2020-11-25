@@ -11,12 +11,14 @@
 
 var childProcess = require('child_process'),
     expect = require('chai').expect,
-    nowdoc = require('nowdoc');
+    nowdoc = require('nowdoc'),
+    cwd = __dirname + '/../fixtures/sync';
 
 describe('DotPHP binary synchronous mode option integration', function () {
     it('should correctly run a program that just prints a number', function (done) {
         childProcess.exec(
-            __dirname + '/../../../bin/dotphp.js -r "print 21;" --sync',
+            __dirname + '/../../../bin/dotphp.js -r "print 21;"',
+            {cwd: cwd},
             function (error, stdout, stderr) {
                 expect(stdout).to.equal('21');
                 expect(stderr).to.equal('');
@@ -28,7 +30,8 @@ describe('DotPHP binary synchronous mode option integration', function () {
 
     it('should correctly run a program that raises a runtime error', function (done) {
         childProcess.exec(
-            __dirname + '/../../../bin/dotphp.js -r "myUndefinedFunc();" --sync',
+            __dirname + '/../../../bin/dotphp.js -r "myUndefinedFunc();"',
+            {cwd: cwd},
             function (error, stdout, stderr) {
                 // NB: Stdout should have a leading newline written out just before the message
                 expect(stdout).to.equal(
@@ -61,7 +64,8 @@ EOS
 
     it('should correctly run a program that contains a syntax error', function (done) {
         childProcess.exec(
-            __dirname + '/../../../bin/dotphp.js -r "my <invalid PHP" --sync',
+            __dirname + '/../../../bin/dotphp.js -r "my <invalid PHP"',
+            {cwd: cwd},
             function (error, stdout, stderr) {
                 expect(stdout).to.equal('\nParse error: syntax error, unexpected \'P\' in Command line code on line 1\n');
                 expect(stderr).to.equal('PHP Parse error:  syntax error, unexpected \'P\' in Command line code on line 1\n');
@@ -74,7 +78,8 @@ EOS
 
     it('should exit the node process with the exit code passed to the exit statement', function (done) {
         childProcess.exec(
-            __dirname + '/../../../bin/dotphp.js -r "exit(40);" --sync',
+            __dirname + '/../../../bin/dotphp.js -r "exit(40);"',
+            {cwd: cwd},
             function (error, stdout, stderr) {
                 expect(stdout).to.equal('');
                 expect(stderr).to.equal('');

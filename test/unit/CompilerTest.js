@@ -16,7 +16,6 @@ var expect = require('chai').expect,
     EnvironmentProvider = require('../../src/EnvironmentProvider'),
     FileSystem = require('../../src/FileSystem'),
     IncluderFactory = require('../../src/IncluderFactory'),
-    Mode = require('../../src/Mode'),
     Transpiler = require('../../src/Transpiler');
 
 describe('Compiler', function () {
@@ -28,7 +27,6 @@ describe('Compiler', function () {
         fileSystem,
         includer,
         includerFactory,
-        mode,
         phpEngine,
         phpRuntime,
         require,
@@ -42,7 +40,6 @@ describe('Compiler', function () {
         fileSystem = sinon.createStubInstance(FileSystem);
         includer = sinon.stub();
         includerFactory = sinon.createStubInstance(IncluderFactory);
-        mode = sinon.createStubInstance(Mode);
         phpEngine = {
             execute: sinon.stub()
         };
@@ -52,9 +49,7 @@ describe('Compiler', function () {
         require = sinon.stub();
         transpiler = sinon.createStubInstance(Transpiler);
 
-        environmentProvider.getEnvironmentForMode
-            .withArgs(sinon.match.same(mode))
-            .returns(environment);
+        environmentProvider.getEnvironment.returns(environment);
         extendedCompiledModule.returns(phpEngine);
         compiledModule.using = sinon.stub().returns(extendedCompiledModule);
         includerFactory.create.returns(includer);
@@ -72,28 +67,28 @@ describe('Compiler', function () {
 
     describe('compile()', function () {
         it('should transpile the correct code', function () {
-            compiler.compile('<?php print "my program";', '/my/awesome-module.php', mode);
+            compiler.compile('<?php print "my program";', '/my/awesome-module.php');
 
             expect(transpiler.transpile).to.have.been.calledOnce;
             expect(transpiler.transpile).to.have.been.calledWith('<?php print "my program";');
         });
 
         it('should transpile the code with the correct file path', function () {
-            compiler.compile('<?php print "my program";', '/my/awesome-module.php', mode);
+            compiler.compile('<?php print "my program";', '/my/awesome-module.php');
 
             expect(transpiler.transpile).to.have.been.calledOnce;
             expect(transpiler.transpile).to.have.been.calledWith(sinon.match.any, '/my/awesome-module.php');
         });
 
         it('should pass the Compiler when creating the includer', function () {
-            compiler.compile('<?php print "my program";', '/my/awesome-module.php', mode);
+            compiler.compile('<?php print "my program";', '/my/awesome-module.php');
 
             expect(includerFactory.create).to.have.been.calledOnce;
             expect(includerFactory.create).to.have.been.calledWith(sinon.match.same(compiler));
         });
 
         it('should pass the created FileSystem when creating the includer', function () {
-            compiler.compile('<?php print "my program";', '/my/awesome-module.php', mode);
+            compiler.compile('<?php print "my program";', '/my/awesome-module.php');
 
             expect(includerFactory.create).to.have.been.calledOnce;
             expect(includerFactory.create).to.have.been.calledWith(
@@ -102,19 +97,8 @@ describe('Compiler', function () {
             );
         });
 
-        it('should pass the Mode through when creating the includer', function () {
-            compiler.compile('<?php print "my program";', '/my/awesome-module.php', mode);
-
-            expect(includerFactory.create).to.have.been.calledOnce;
-            expect(includerFactory.create).to.have.been.calledWith(
-                sinon.match.any,
-                sinon.match.any,
-                sinon.match.same(mode)
-            );
-        });
-
         it('should extend the module factory with the created includer', function () {
-            compiler.compile('<?php print "my program";', '/my/module.php', mode);
+            compiler.compile('<?php print "my program";', '/my/module.php');
 
             expect(compiledModule.using).to.have.been.calledOnce;
             expect(compiledModule.using).to.have.been.calledWith(sinon.match({
@@ -123,7 +107,7 @@ describe('Compiler', function () {
         });
 
         it('should extend the module factory with the file path', function () {
-            compiler.compile('<?php print "my program";', '/my/module.php', mode);
+            compiler.compile('<?php print "my program";', '/my/module.php');
 
             expect(compiledModule.using).to.have.been.calledOnce;
             expect(compiledModule.using).to.have.been.calledWith(sinon.match({
@@ -132,7 +116,7 @@ describe('Compiler', function () {
         });
 
         it('should specify the Environment for the module factory', function () {
-            compiler.compile('<?php print "my program";', '/my/module.php', mode);
+            compiler.compile('<?php print "my program";', '/my/module.php');
 
             expect(compiledModule.using).to.have.been.calledOnce;
             expect(compiledModule.using).to.have.been.calledWith(sinon.match.any, sinon.match.same(environment));
@@ -142,7 +126,7 @@ describe('Compiler', function () {
             var moduleFactory;
 
             beforeEach(function () {
-                moduleFactory = compiler.compile('<?php print "my program";', '/my/module.php', mode);
+                moduleFactory = compiler.compile('<?php print "my program";', '/my/module.php');
             });
 
             it('should pass options, environment and top-level scope through to the factory', function () {

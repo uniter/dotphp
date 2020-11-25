@@ -15,7 +15,6 @@ var expect = require('chai').expect,
     DotPHP = require('../../src/DotPHP'),
     Evaluator = require('../../src/Evaluator'),
     FileCompiler = require('../../src/FileCompiler'),
-    Mode = require('../../src/Mode'),
     Promise = require('lie'),
     RequireExtension = require('../../src/RequireExtension'),
     StdinReader = require('../../src/StdinReader'),
@@ -47,7 +46,8 @@ describe('DotPHP', function () {
             evaluator,
             transpiler,
             jsBeautify,
-            stdinReader
+            stdinReader,
+            'psync'
         );
     });
 
@@ -68,14 +68,6 @@ describe('DotPHP', function () {
         });
     });
 
-    describe('bootstrapSync()', function () {
-        it('should run any bootstraps via the Bootstrapper', function () {
-            dotPHP.bootstrapSync();
-
-            expect(bootstrapper.bootstrapSync).to.have.been.calledOnce;
-        });
-    });
-
     describe('evaluate()', function () {
         it('should ask the Evaluator to evaluate the PHP code', function () {
             dotPHP.evaluate('<?php print "my program";', '/some/module.php');
@@ -87,13 +79,6 @@ describe('DotPHP', function () {
             );
         });
 
-        it('should evaluate the module in asynchronous mode', function () {
-            dotPHP.evaluate('<?php print "my program";', '/some/module.php');
-
-            expect(evaluator.evaluate.args[0][2]).to.be.an.instanceOf(Mode);
-            expect(evaluator.evaluate.args[0][2].isSynchronous()).to.be.false;
-        });
-
         it('should return the result from the Evaluator', function () {
             evaluator.evaluate.returns(21);
 
@@ -101,28 +86,9 @@ describe('DotPHP', function () {
         });
     });
 
-    describe('evaluateSync()', function () {
-        it('should ask the Evaluator to evaluate the PHP code', function () {
-            dotPHP.evaluateSync('<?php print "my program";', '/some/module.php');
-
-            expect(evaluator.evaluate).to.have.been.calledOnce;
-            expect(evaluator.evaluate).to.have.been.calledWith(
-                '<?php print "my program";',
-                '/some/module.php'
-            );
-        });
-
-        it('should evaluate the module in synchronous mode', function () {
-            dotPHP.evaluateSync('<?php print "my program";', '/some/module.php');
-
-            expect(evaluator.evaluate.args[0][2]).to.be.an.instanceOf(Mode);
-            expect(evaluator.evaluate.args[0][2].isSynchronous()).to.be.true;
-        });
-
-        it('should return the result from the Evaluator', function () {
-            evaluator.evaluate.returns(21);
-
-            expect(dotPHP.evaluateSync('<?php print "my program";', '/some/module.php')).to.equal(21);
+    describe('getMode()', function () {
+        it('should return the synchronicity mode', function () {
+            expect(dotPHP.getMode()).to.equal('psync');
         });
     });
 
@@ -151,41 +117,11 @@ describe('DotPHP', function () {
             expect(fileCompiler.compile).to.have.been.calledWith('/some/module.php');
         });
 
-        it('should require the module in asynchronous mode', function () {
-            dotPHP.require('/some/module.php');
-
-            expect(fileCompiler.compile.args[0][1]).to.be.an.instanceOf(Mode);
-            expect(fileCompiler.compile.args[0][1].isSynchronous()).to.be.false;
-        });
-
         it('should return the module factory from the FileCompiler', function () {
             var moduleFactory = sinon.stub();
             fileCompiler.compile.returns(moduleFactory);
 
             expect(dotPHP.require('/some/module.php')).to.equal(moduleFactory);
-        });
-    });
-
-    describe('requireSync()', function () {
-        it('should ask the FileCompiler to require the module', function () {
-            dotPHP.requireSync('/some/module.php');
-
-            expect(fileCompiler.compile).to.have.been.calledOnce;
-            expect(fileCompiler.compile).to.have.been.calledWith('/some/module.php');
-        });
-
-        it('should require the module in synchronous mode', function () {
-            dotPHP.requireSync('/some/module.php');
-
-            expect(fileCompiler.compile.args[0][1]).to.be.an.instanceOf(Mode);
-            expect(fileCompiler.compile.args[0][1].isSynchronous()).to.be.true;
-        });
-
-        it('should return the module factory from the Requirer', function () {
-            var moduleFactory = sinon.stub();
-            fileCompiler.compile.returns(moduleFactory);
-
-            expect(dotPHP.requireSync('/some/module.php')).to.equal(moduleFactory);
         });
     });
 
@@ -202,13 +138,6 @@ describe('DotPHP', function () {
                 '<?php print "my code";',
                 '/path/to/my_module.php'
             );
-        });
-
-        it('should transpile the code in asynchronous mode', function () {
-            dotPHP.transpile('<?php print "my code";', '/path/to/my_module.php');
-
-            expect(transpiler.transpile.args[0][2]).to.be.an.instanceOf(Mode);
-            expect(transpiler.transpile.args[0][2].isSynchronous()).to.be.false;
         });
 
         it('should beautify the JS code before returning', function () {

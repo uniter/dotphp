@@ -16,9 +16,14 @@ var _ = require('microdash');
  * @param {PHPToJS} phpToJS
  * @param {Object} transpilerConfig
  * @param {Object} phpToJSConfig
+ * @param {string} mode
  * @constructor
  */
-function Transpiler(phpParser, phpToJS, transpilerConfig, phpToJSConfig) {
+function Transpiler(phpParser, phpToJS, transpilerConfig, phpToJSConfig, mode) {
+    /**
+     * @type {string}
+     */
+    this.mode = mode;
     /**
      * @type {Parser}
      */
@@ -43,10 +48,9 @@ _.extend(Transpiler.prototype, {
      *
      * @param {string} phpCode
      * @param {string} filePath
-     * @param {Mode} mode
      * @returns {string}
      */
-    transpile: function (phpCode, filePath, mode) {
+    transpile: function (phpCode, filePath) {
         var phpAST,
             transpiler = this;
 
@@ -61,11 +65,11 @@ _.extend(Transpiler.prototype, {
             _.extend(
                 {
                     lineNumbers: true,
+                    mode: transpiler.mode,
                     path: filePath,
                     sourceMap: {
                         sourceContent: phpCode
-                    },
-                    sync: mode.isSynchronous()
+                    }
                 },
                 transpiler.phpToJSConfig
             ),

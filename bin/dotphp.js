@@ -25,7 +25,6 @@ var path = require('path'),
             'f': 'file',
             'h': 'help',
             'r': 'run',
-            's': 'sync',
             't': 'transpile-only',
             'u': 'dump-ast'
         },
@@ -40,7 +39,6 @@ var path = require('path'),
     phpCommon = require('phpcommon'),
     phpParser,
     phpToAST = require('phptoast'),
-    syncMode = hasOwn.call(parsedOptions, 'sync'),
     PHPError = phpCommon.PHPError,
     PHPParseError = phpCommon.PHPParseError;
 
@@ -103,29 +101,17 @@ function runPHP(phpCode) {
         return;
     }
 
-    if (syncMode) {
-        // Synchronous mode
-
-        try {
-            dotPHP.bootstrapSync();
-
-            handleSuccess(dotPHP.evaluateSync(phpCode, filePath));
-        } catch (error) {
-            handleError(error);
-        }
-    } else {
-        // Asynchronous (Promise-based) mode
-
-        dotPHP.bootstrap().then(function () {
+    dotPHP.bootstrap()
+        .then(function () {
             return dotPHP.evaluate(phpCode, filePath);
-        }).then(function (resultValue) {
+        })
+        .then(function (resultValue) {
             handleSuccess(resultValue);
 
             // PHP program did not explicitly exit, nothing to do
         }, function (error) {
             handleError(error);
         });
-    }
 }
 
 if (hasOwn.call(parsedOptions, 'run')) {
@@ -148,7 +134,6 @@ if (hasOwn.call(parsedOptions, 'run')) {
         '  -u / --dump-ast       - Dump AST of PHP code instead of executing it',
         '  -t / --transpile-only - Dump transpiled JS of PHP code instead of executing it',
         '  -r / --run=<code>     - Run PHP <code> without using script tags <? ... ?>',
-        '  -s / --sync           - Run PHP code in synchronous mode for speed (default is asynchronous for compatibility)',
         '  -h / --help           - Show this help'
     ].join('\n'));
 

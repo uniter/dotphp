@@ -52,19 +52,18 @@ _.extend(Compiler.prototype, {
     /**
      * Compiles a PHP code string read from a file and returns a module factory
      *
-     * @param {string} transpiledCode
+     * @param {string} phpCode
      * @param {string|null} filePath
-     * @param {Mode} mode
      * @returns {Function}
      */
-    compile: function (phpCode, filePath, mode) {
+    compile: function (phpCode, filePath) {
         /*jshint evil:true */
         var compiler = this,
-            transpiledCode = compiler.transpiler.transpile(phpCode, filePath, mode),
+            transpiledCode = compiler.transpiler.transpile(phpCode, filePath),
             compiledModule = new Function('require', 'return ' + transpiledCode)(compiler.require),
-            environment = compiler.environmentProvider.getEnvironmentForMode(mode),
+            environment = compiler.environmentProvider.getEnvironment(),
             configuredCompiledModule = compiledModule.using({
-                include: compiler.includerFactory.create(compiler, compiler.fileSystem, mode),
+                include: compiler.includerFactory.create(compiler, compiler.fileSystem),
                 path: filePath
             }, environment);
 
