@@ -15,9 +15,10 @@ var _ = require('microdash');
  * @param {FileCompiler} fileCompiler
  * @param {Bootstrapper} bootstrapper
  * @param {Function} require
+ * @param {string} mode
  * @constructor
  */
-function RequireExtension(fileCompiler, bootstrapper, require) {
+function RequireExtension(fileCompiler, bootstrapper, require, mode) {
     /**
      * @type {Bootstrapper}
      */
@@ -26,6 +27,10 @@ function RequireExtension(fileCompiler, bootstrapper, require) {
      * @type {FileCompiler}
      */
     this.fileCompiler = fileCompiler;
+    /**
+     * @type {string}
+     */
+    this.mode = mode;
     /**
      * @type {Function}
      */
@@ -41,7 +46,8 @@ _.extend(RequireExtension.prototype, {
      * @returns {Promise|null}
      */
     install: function () {
-        var extension = this;
+        var extension = this,
+            result;
 
         function doInstall() {
             // Install a handler for Node.js require() of files with ".php" extension,
@@ -51,8 +57,15 @@ _.extend(RequireExtension.prototype, {
             };
         }
 
-        return extension.bootstrapper.bootstrap()
-            .then(doInstall);
+        result = extension.bootstrapper.bootstrap();
+
+        if (extension.mode === 'sync') {
+            doInstall();
+        } else {
+            result = result.then(doInstall);
+        }
+
+        return result;
     }
 });
 

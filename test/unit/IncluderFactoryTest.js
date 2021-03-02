@@ -91,16 +91,60 @@ describe('IncluderFactory', function () {
                 );
             });
 
-            it('should reject the promise when the file cannot be read', function () {
-                fs.readFileSync.throws(new Error('Oh dear, the file is unreadable'));
+            it('should reject the promise when an ENOENT SystemError is raised by FileSystem.realPath', function () {
+                var error = new Error('Oh dear, the file is unreadable');
+                error.code = 'ENOENT';
+                fileSystem.realPath
+                    .withArgs('/my/module.php')
+                    .throws(error);
                 callCreate();
 
                 includer('/my/module.php', promise);
 
                 expect(reject).to.have.been.calledOnce;
-                expect(reject).to.have.been.calledWith(
-                    'File "/my/effective/real/path.php" could not be read: Error: Oh dear, the file is unreadable'
-                );
+                expect(reject).to.have.been.calledWith(sinon.match.instanceOf(Error));
+                expect(reject.args[0][0].message).to.equal('No such file or directory');
+            });
+
+            it('should reject the promise when the file cannot be resolved with FileSystem.realPath for any other reason', function () {
+                fileSystem.realPath
+                    .withArgs('/my/module.php')
+                    .throws(new Error('Oh dear, the file is unreadable'));
+                callCreate();
+
+                includer('/my/module.php', promise);
+
+                expect(reject).to.have.been.calledOnce;
+                expect(reject).to.have.been.calledWith(sinon.match.instanceOf(Error));
+                expect(reject.args[0][0].message).to.equal('Oh dear, the file is unreadable');
+            });
+
+            it('should reject the promise when an ENOENT SystemError is raised by readFileSync', function () {
+                var error = new Error('Oh dear, the file is unreadable');
+                error.code = 'ENOENT';
+                fs.readFileSync
+                    .withArgs('/my/effective/real/path.php')
+                    .throws(error);
+                callCreate();
+
+                includer('/my/module.php', promise);
+
+                expect(reject).to.have.been.calledOnce;
+                expect(reject).to.have.been.calledWith(sinon.match.instanceOf(Error));
+                expect(reject.args[0][0].message).to.equal('No such file or directory');
+            });
+
+            it('should reject the promise when the file cannot be read for any other reason', function () {
+                fs.readFileSync
+                    .withArgs('/my/effective/real/path.php')
+                    .throws(new Error('Oh dear, the file is unreadable'));
+                callCreate();
+
+                includer('/my/module.php', promise);
+
+                expect(reject).to.have.been.calledOnce;
+                expect(reject).to.have.been.calledWith(sinon.match.instanceOf(Error));
+                expect(reject.args[0][0].message).to.equal('Oh dear, the file is unreadable');
             });
 
             it('should resolve the promise with the module factory from the compiler', function () {

@@ -20,7 +20,7 @@ describe('Module require extension integration - synchronous mode', function () 
 
     describe('after installing the require(...) extension', function () {
         beforeEach(function () {
-            return this.dotPHP.register();
+            this.dotPHP.register();
         });
 
         it('should correctly require a PHP module that just returns 21', function () {

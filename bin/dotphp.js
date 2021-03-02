@@ -101,7 +101,7 @@ function runPHP(phpCode) {
         return;
     }
 
-    dotPHP.bootstrap()
+    Promise.resolve(dotPHP.bootstrap())
         .then(function () {
             return dotPHP.evaluate(phpCode, filePath);
         })

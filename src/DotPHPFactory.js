@@ -148,6 +148,7 @@ _.extend(DotPHPFactory.prototype, {
                 factory.psyncRuntime,
                 factory.syncRuntime,
                 io,
+                new IncluderFactory(factory.fs, pathMapper),
                 fileSystem,
                 performance,
                 uniterConfig.getConfigsForLibrary('dotphp', 'phpcore'),
@@ -155,7 +156,6 @@ _.extend(DotPHPFactory.prototype, {
             ),
             compiler = new Compiler(
                 transpiler,
-                new IncluderFactory(factory.fs, pathMapper),
                 factory.require,
                 environmentProvider,
                 fileSystem
@@ -163,9 +163,9 @@ _.extend(DotPHPFactory.prototype, {
             evaluator = new Evaluator(compiler, environmentProvider, mode),
             fileCompiler = new FileCompiler(factory.fs, pathMapper, compiler),
             requirer = new Requirer(fileCompiler),
-            bootstrapper = new Bootstrapper(requirer, dotPHPConfigSet.concatArrays('bootstraps')),
+            bootstrapper = new Bootstrapper(requirer, dotPHPConfigSet.concatArrays('bootstraps'), mode),
             dotPHP = new DotPHP(
-                new RequireExtension(fileCompiler, bootstrapper, factory.require),
+                new RequireExtension(fileCompiler, bootstrapper, factory.require, mode),
                 fileCompiler,
                 bootstrapper,
                 evaluator,

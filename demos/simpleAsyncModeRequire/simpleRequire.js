@@ -1,6 +1,6 @@
 'use strict';
 
-require('../../register')()
+require('../../register')(__dirname)
     .then(function () {
         return require('./print27.php')().execute();
     })

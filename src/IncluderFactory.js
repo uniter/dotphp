@@ -47,13 +47,22 @@ _.extend(IncluderFactory.prototype, {
         function includer(filePath, promise) {
             var moduleFactory,
                 phpCode,
-                realPath = fileSystem.realPath(filePath),
-                effectiveRealPath = factory.pathMapper.map(realPath);
+                realPath,
+                effectiveRealPath;
+
+            try {
+                realPath = fileSystem.realPath(filePath);
+            } catch (error) {
+                promise.reject(new Error(error.code === 'ENOENT' ? 'No such file or directory' : error.message));
+                return;
+            }
+
+            effectiveRealPath = factory.pathMapper.map(realPath);
 
             try {
                 phpCode = factory.fs.readFileSync(effectiveRealPath).toString();
             } catch (error) {
-                promise.reject('File "' + effectiveRealPath + '" could not be read: ' + error.toString());
+                promise.reject(new Error(error.code === 'ENOENT' ? 'No such file or directory' : error.message));
                 return;
             }
 

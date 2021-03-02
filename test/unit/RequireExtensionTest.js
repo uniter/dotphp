@@ -17,6 +17,7 @@ var expect = require('chai').expect,
 
 describe('RequireExtension', function () {
     var bootstrapper,
+        createExtension,
         extension,
         fileCompiler,
         module,
@@ -36,36 +37,79 @@ describe('RequireExtension', function () {
 
         bootstrapper.bootstrap.returns(Promise.resolve());
 
-        extension = new RequireExtension(fileCompiler, bootstrapper, require);
+        createExtension = function (mode) {
+            extension = new RequireExtension(fileCompiler, bootstrapper, require, mode);
+        };
+        createExtension('async');
     });
 
     describe('install()', function () {
-        it('should install a require(...) extension for the "php" file extension', function () {
-            return extension.install(options).then(function () {
+        describe('in async mode', function () {
+            it('should install a require(...) extension for the "php" file extension', function () {
+                return extension.install(options).then(function () {
+                    expect(require.extensions['.php']).to.be.a('function');
+                });
+            });
+
+            it('should install the require(...) extension after handling any bootstraps', function () {
+                return extension.install(options).then(function () {
+                    expect(bootstrapper.bootstrap).to.have.been.called;
+                });
+            });
+
+            describe('the require(...) extension installed', function () {
+                it('should ask the FileCompiler to compile the module', function () {
+                    return extension.install(options).then(function () {
+                        require.extensions['.php'](module, '/my/file/path.php');
+
+                        expect(fileCompiler.compile).to.have.been.calledOnce;
+                        expect(fileCompiler.compile).to.have.been.calledWith('/my/file/path.php');
+                    });
+                });
+
+                it('should set the result from the Requirer as module.exports', function () {
+                    fileCompiler.compile.returns(21);
+
+                    return extension.install(options).then(function () {
+                        require.extensions['.php'](module, '/my/file/path.php');
+
+                        expect(module.exports).to.equal(21);
+                    });
+                });
+            });
+        });
+
+        describe('in sync mode', function () {
+            beforeEach(function () {
+                createExtension('sync');
+            });
+
+            it('should install a require(...) extension for the "php" file extension', function () {
+                extension.install(options);
+
                 expect(require.extensions['.php']).to.be.a('function');
             });
-        });
 
-        it('should install the require(...) extension after handling any bootstraps', function () {
-            return extension.install(options).then(function () {
+            it('should install the require(...) extension after handling any bootstraps', function () {
+                extension.install(options);
+
                 expect(bootstrapper.bootstrap).to.have.been.called;
             });
-        });
 
-        describe('the require(...) extension installed', function () {
-            it('should ask the FileCompiler to compile the module', function () {
-                return extension.install(options).then(function () {
+            describe('the require(...) extension installed', function () {
+                it('should ask the FileCompiler to compile the module', function () {
+                    extension.install(options);
+
                     require.extensions['.php'](module, '/my/file/path.php');
 
                     expect(fileCompiler.compile).to.have.been.calledOnce;
                     expect(fileCompiler.compile).to.have.been.calledWith('/my/file/path.php');
                 });
-            });
 
-            it('should set the result from the Requirer as module.exports', function () {
-                fileCompiler.compile.returns(21);
+                it('should set the result from the Requirer as module.exports', function () {
+                    fileCompiler.compile.returns(21);
+                    extension.install(options);
 
-                return extension.install(options).then(function () {
                     require.extensions['.php'](module, '/my/file/path.php');
 
                     expect(module.exports).to.equal(21);

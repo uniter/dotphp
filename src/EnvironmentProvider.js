@@ -18,6 +18,7 @@ var _ = require('microdash');
  * @param {Runtime} psyncRuntime
  * @param {Runtime} syncRuntime
  * @param {IO} io
+ * @param {IncluderFactory} includerFactory
  * @param {FileSystem} fileSystem
  * @param {Performance} performance
  * @param {ConfigSet} phpCoreConfigSet
@@ -29,6 +30,7 @@ function EnvironmentProvider(
     psyncRuntime,
     syncRuntime,
     io,
+    includerFactory,
     fileSystem,
     performance,
     phpCoreConfigSet,
@@ -46,6 +48,10 @@ function EnvironmentProvider(
      * @type {FileSystem}
      */
     this.fileSystem = fileSystem;
+    /**
+     * @type {IncluderFactory}
+     */
+    this.includerFactory = includerFactory;
     /**
      * @type {IO}
      */
@@ -77,9 +83,10 @@ _.extend(EnvironmentProvider.prototype, {
      * Fetches the Environment for the runtime using the current synchronicity mode,
      * lazily creating it if needed
      *
+     * @param {Compiler} compiler
      * @returns {Environment}
      */
-    getEnvironment: function () {
+    getEnvironment: function (compiler) {
         var effectiveRuntime,
             environmentOptions,
             provider = this;
@@ -98,6 +105,7 @@ _.extend(EnvironmentProvider.prototype, {
 
         environmentOptions = Object.assign({}, provider.phpCoreConfigSet.mergeAll(), {
             fileSystem: provider.fileSystem,
+            include: provider.includerFactory.create(compiler, provider.fileSystem),
             performance: provider.performance
         });
 

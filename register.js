@@ -9,18 +9,24 @@
 
 'use strict';
 
-var path = require('path'),
-    // Use the directory of the entrypoint script as the context
-    contextDirectory = path.dirname(process.mainModule.filename),
-
-    dotPHP = require('.').create(contextDirectory);
+var path = require('path');
 
 /**
  * Installs PHP support into the current Node.js environment,
  * hooking require(...) to support loading files with ".php" extension
  *
+ * @param {string=} contextDirectory Directory to resolve uniter.config.js inside
  * @return {Promise|null}
  */
-module.exports = function () {
+module.exports = function (contextDirectory) {
+    var dotPHP;
+
+    if (!contextDirectory) {
+        // Use the directory of the entrypoint script as the context
+        contextDirectory = path.dirname(process.mainModule.filename);
+    }
+
+    dotPHP = require('.').create(contextDirectory);
+
     return dotPHP.register();
 };
