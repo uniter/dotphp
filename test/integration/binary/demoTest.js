@@ -72,18 +72,37 @@ describe('DotPHP integration tests to sanity check correct operation of the demo
         );
     });
 
-    it('should correctly run the Simple Require demo', function (done) {
+    it('should correctly run the Simple (Async mode) Require demo', function (done) {
         this.timeout(10000); // Allow extra time for this long demo test
 
         childProcess.exec(
-            process.execPath + ' ' + __dirname + '/../../../demos/simpleRequire/simpleRequire.js',
+            process.execPath + ' ' + __dirname + '/../../../demos/simpleAsyncModeRequire/simpleRequire.js',
             function (error, stdout, stderr) {
                 if (error) {
                     done(error);
                     return;
                 }
 
-                expect(stdout).to.contain('demos/simpleRequire/print27.php.\nThis is 27.');
+                expect(stdout).to.contain('demos/simpleAsyncModeRequire/print27.php.\nThis is 27.');
+                expect(stderr).to.equal('');
+                expect(error).to.be.null;
+                done();
+            }
+        );
+    });
+
+    it('should correctly run the Simple (Sync mode) Require demo', function (done) {
+        this.timeout(10000); // Allow extra time for this long demo test
+
+        childProcess.exec(
+            process.execPath + ' ' + __dirname + '/../../../demos/simpleSyncModeRequire/simpleRequire.js',
+            function (error, stdout, stderr) {
+                if (error) {
+                    done(error);
+                    return;
+                }
+
+                expect(stdout).to.contain('demos/simpleSyncModeRequire/print27.php.\nThis is 27.');
                 expect(stderr).to.equal('');
                 expect(error).to.be.null;
                 done();

@@ -14,13 +14,18 @@ var _ = require('microdash');
 /**
  * @param {Requirer} requirer
  * @param {string[]} bootstraps
+ * @param {string} mode
  * @constructor
  */
-function Bootstrapper(requirer, bootstraps) {
+function Bootstrapper(requirer, bootstraps, mode) {
     /**
      * @type {string[]}
      */
     this.bootstraps = bootstraps;
+    /**
+     * @type {string}
+     */
+    this.mode = mode;
     /**
      * @type {Requirer}
      */
@@ -33,17 +38,22 @@ _.extend(Bootstrapper.prototype, {
      * The returned promise will only be resolved once all have completed (or once the first module
      * to reject has done so)
      *
-     * @returns {Promise}
+     * @returns {Promise|null}
      */
     bootstrap: function () {
-        var bootstrapper = this;
-
-        return new Promise(function (resolve, reject) {
-            var remainingBootstraps;
-
+        var bootstrapper = this,
             // An array of file paths was given - require them in sequence
             remainingBootstraps = bootstrapper.bootstraps.slice();
 
+        if (bootstrapper.mode === 'sync') {
+            remainingBootstraps.forEach(function (bootstrapFilePath) {
+                bootstrapper.requirer.require(bootstrapFilePath);
+            });
+
+            return null;
+        }
+
+        return new Promise(function (resolve, reject) {
             (function deQueue() {
                 var bootstrapFilePath;
 
