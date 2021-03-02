@@ -13,7 +13,6 @@ var expect = require('chai').expect,
     sinon = require('sinon'),
     Compiler = require('../../src/Compiler'),
     FileCompiler = require('../../src/FileCompiler'),
-    Mode = require('../../src/Mode'),
     PathMapper = require('../../src/PathMapper');
 
 describe('FileCompiler', function () {
@@ -44,16 +43,10 @@ describe('FileCompiler', function () {
                     toString: sinon.stub().returns('<?php $my = "PHP code";')
                 });
             compiler.compile
-                .withArgs(
-                    '<?php $my = "PHP code";',
-                    '/my/original/module_path.php',
-                    sinon.match(function (mode) {
-                        return mode.isSynchronous();
-                    })
-                )
+                .withArgs('<?php $my = "PHP code";', '/my/original/module_path.php')
                 .returns(moduleFactory);
 
-            expect(fileCompiler.compile('/my/original/module_path.php', Mode.synchronous()))
+            expect(fileCompiler.compile('/my/original/module_path.php'))
                 .to.equal(moduleFactory);
         });
     });

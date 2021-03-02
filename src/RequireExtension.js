@@ -9,8 +9,7 @@
 
 'use strict';
 
-var _ = require('microdash'),
-    Mode = require('./Mode');
+var _ = require('microdash');
 
 /**
  * @param {FileCompiler} fileCompiler
@@ -39,35 +38,17 @@ _.extend(RequireExtension.prototype, {
      * that will be fulfilled once the installation is complete (including execution of
      * any bootstrap files). In synchronous mode, null will be returned
      *
-     * @param {object} options
      * @returns {Promise|null}
      */
-    install: function (options) {
-        var extension = this,
-            sync;
-
-        if (!options) {
-            options = {};
-        }
-
-        sync = options.sync === true;
+    install: function () {
+        var extension = this;
 
         function doInstall() {
             // Install a handler for Node.js require() of files with ".php" extension,
             // that compiles and executes PHP modules via Uniter
             extension.require.extensions['.php'] = function (module, filePath) {
-                module.exports = extension.fileCompiler.compile(
-                    filePath,
-                    sync ? Mode.synchronous() : Mode.asynchronous()
-                );
+                module.exports = extension.fileCompiler.compile(filePath);
             };
-        }
-
-        if (sync) {
-            extension.bootstrapper.bootstrapSync();
-            doInstall();
-
-            return null;
         }
 
         return extension.bootstrapper.bootstrap()

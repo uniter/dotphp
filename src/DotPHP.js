@@ -9,8 +9,7 @@
 
 'use strict';
 
-var _ = require('microdash'),
-    Mode = require('./Mode');
+var _ = require('microdash');
 
 /**
  * @param {RequireExtension} requireExtension
@@ -20,6 +19,7 @@ var _ = require('microdash'),
  * @param {Transpiler} transpiler
  * @param {Function} jsBeautify Beautify NPM package
  * @param {StdinReader} stdinReader
+ * @param {string} mode
  * @constructor
  */
 function DotPHP(
@@ -29,7 +29,8 @@ function DotPHP(
     evaluator,
     transpiler,
     jsBeautify,
-    stdinReader
+    stdinReader,
+    mode
 ) {
     /**
      * @type {Bootstrapper}
@@ -47,6 +48,10 @@ function DotPHP(
      * @type {Function}
      */
     this.jsBeautify = jsBeautify;
+    /**
+     * @type {string}
+     */
+    this.mode = mode;
     /**
      * @type {RequireExtension}
      */
@@ -67,41 +72,31 @@ _.extend(DotPHP.prototype, {
      * The returned promise will only be resolved once all have completed (or once the first module
      * to reject has done so)
      *
-     * @returns {Promise}
+     * @returns {Promise} Rejects if requiring any of the configured bootstrap files results in an error
      */
     bootstrap: function () {
         return this.bootstrapper.bootstrap();
     },
 
     /**
-     * Requires any bootstrap file(s), if specified in config, in sequence (if multiple are provided
-     *
-     * @throws {Error} Throws if requiring any of the configured bootstrap files results in an error
-     */
-    bootstrapSync: function () {
-        this.bootstrapper.bootstrapSync();
-    },
-
-    /**
-     * Executes and returns the result of the specified PHP code asynchronously
+     * Executes and returns the result of the specified PHP code using the current synchronicity mode
+     * (as set by unified platform config)
      *
      * @param {string} phpCode
      * @param {string|null} filePath
-     * @returns {Promise}
+     * @returns {Promise<Value>|Value}
      */
     evaluate: function (phpCode, filePath) {
-        return this.evaluator.evaluate(phpCode, filePath, Mode.asynchronous());
+        return this.evaluator.evaluate(phpCode, filePath);
     },
 
     /**
-     * Executes and returns the result of the specified PHP code synchronously
+     * Fetches the synchronicity mode for this DotPHP engine
      *
-     * @param {string} phpCode
-     * @param {string|null} filePath
-     * @returns {Value}
+     * @returns {string}
      */
-    evaluateSync: function (phpCode, filePath) {
-        return this.evaluator.evaluate(phpCode, filePath, Mode.synchronous());
+    getMode: function () {
+        return this.mode;
     },
 
     /**
@@ -116,31 +111,21 @@ _.extend(DotPHP.prototype, {
     /**
      * Registers the `.php` extension handler for Node
      *
-     * @param {object} options
      * @returns {Promise|null}
      */
-    register: function (options) {
-        return this.requireExtension.install(options);
+    register: function () {
+        return this.requireExtension.install();
     },
 
     /**
-     * Fetches a PHP module factory from its full/real path in asynchronous mode
+     * Fetches a PHP module factory from its full/real path using the current synchronicity mode
+     * (as set by unified platform config)
      *
      * @param {string} filePath
      * @returns {Function}
      */
     require: function (filePath) {
-        return this.fileCompiler.compile(filePath, Mode.asynchronous());
-    },
-
-    /**
-     * Fetches a PHP module factory from its full/real path in synchronous mode
-     *
-     * @param {string} filePath
-     * @returns {Function}
-     */
-    requireSync: function (filePath) {
-        return this.fileCompiler.compile(filePath, Mode.synchronous());
+        return this.fileCompiler.compile(filePath);
     },
 
     /**
@@ -152,7 +137,7 @@ _.extend(DotPHP.prototype, {
      */
     transpile: function (phpCode, filePath) {
         var dotPHP = this,
-            js = dotPHP.transpiler.transpile(phpCode, filePath, Mode.asynchronous());
+            js = dotPHP.transpiler.transpile(phpCode, filePath);
 
         return dotPHP.jsBeautify(js, {indent_size: 2});
     }

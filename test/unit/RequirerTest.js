@@ -13,13 +13,11 @@ var expect = require('chai').expect,
     sinon = require('sinon'),
     Engine = require('phpcore/src/Engine'),
     FileCompiler = require('../../src/FileCompiler'),
-    Mode = require('../../src/Mode'),
     Requirer = require('../../src/Requirer');
 
 describe('Requirer', function () {
     var engine,
         fileCompiler,
-        mode,
         moduleFactory,
         requirer,
         resultPromise;
@@ -27,7 +25,6 @@ describe('Requirer', function () {
     beforeEach(function () {
         engine = sinon.createStubInstance(Engine);
         fileCompiler = sinon.createStubInstance(FileCompiler);
-        mode = sinon.createStubInstance(Mode);
         moduleFactory = sinon.stub();
         resultPromise = Promise.resolve();
 
@@ -40,24 +37,14 @@ describe('Requirer', function () {
 
     describe('require()', function () {
         it('should compile the file via the FileCompiler', function () {
-            requirer.require('/my/module.php', mode);
+            requirer.require('/my/module.php');
 
             expect(fileCompiler.compile).to.have.been.calledOnce;
             expect(fileCompiler.compile).to.have.been.calledWith('/my/module.php');
         });
 
-        it('should pass the Mode through to the FileCompiler', function () {
-            requirer.require('/my/module.php', mode);
-
-            expect(fileCompiler.compile).to.have.been.calledOnce;
-            expect(fileCompiler.compile).to.have.been.calledWith(
-                sinon.match.any,
-                sinon.match.same(mode)
-            );
-        });
-
         it('should return the result from the .execute() method of the module Engine', function () {
-            expect(requirer.require('/my/module.php', mode)).to.equal(resultPromise);
+            expect(requirer.require('/my/module.php')).to.equal(resultPromise);
         });
     });
 });

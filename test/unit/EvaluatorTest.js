@@ -16,17 +16,16 @@ var expect = require('chai').expect,
     Environment = require('phpcore/src/Environment'),
     EnvironmentProvider = require('../../src/EnvironmentProvider'),
     Evaluator = require('../../src/Evaluator'),
-    Mode = require('../../src/Mode'),
     PHPError = phpCommon.PHPError,
     Transpiler = require('../../src/Transpiler');
 
 describe('Evaluator', function () {
     var compiledModule,
         compiler,
+        createEvaluator,
         environment,
         environmentProvider,
         evaluator,
-        mode,
         phpEngine,
         result,
         transpiler;
@@ -36,7 +35,6 @@ describe('Evaluator', function () {
         compiler = sinon.createStubInstance(Compiler);
         environment = sinon.createStubInstance(Environment);
         environmentProvider = sinon.createStubInstance(EnvironmentProvider);
-        mode = sinon.createStubInstance(Mode);
         result = {};
         phpEngine = {
             execute: sinon.stub().returns(result)
@@ -46,18 +44,17 @@ describe('Evaluator', function () {
         compiler.compile.returns(compiledModule);
         compiledModule.returns(phpEngine);
 
-        environmentProvider.getEnvironmentForMode
-            .withArgs(sinon.match.same(mode))
-            .returns(environment);
+        environmentProvider.getEnvironment.returns(environment);
 
-        mode.isSynchronous.returns(false);
-
-        evaluator = new Evaluator(compiler, environmentProvider);
+        createEvaluator = function (mode) {
+            evaluator = new Evaluator(compiler, environmentProvider, mode);
+        };
+        createEvaluator('async');
     });
 
     describe('evaluate()', function () {
         it('should compile the code with its file path', function () {
-            evaluator.evaluate('<?php print "my program";', '/my/module.php', mode);
+            evaluator.evaluate('<?php print "my program";', '/my/module.php');
 
             expect(compiler.compile).to.have.been.calledOnce;
             expect(compiler.compile).to.have.been.calledWith(
@@ -66,45 +63,42 @@ describe('Evaluator', function () {
             );
         });
 
-        it('should pass the mode through when compiling the code', function () {
-            evaluator.evaluate('<?php print "my program";', '/my/module.php', mode);
-
-            expect(compiler.compile).to.have.been.calledOnce;
-            expect(compiler.compile).to.have.been.calledWith(
-                sinon.match.any,
-                sinon.match.any,
-                sinon.match.same(mode)
-            );
-        });
-
         it('should return the result from executing the module', function () {
-            expect(evaluator.evaluate('<?php print "my program";', '/my/module.php', mode))
+            expect(evaluator.evaluate('<?php print "my program";', '/my/module.php'))
                 .to.equal(result);
         });
 
         it('should not catch an error thrown in synchronous mode', function () {
-            mode.isSynchronous.returns(true);
+            createEvaluator('sync');
             compiler.compile.throws(new Error('Bang'));
 
             expect(function () {
-                evaluator.evaluate('<?php print "my program";', '/my/module.php', mode);
+                evaluator.evaluate('<?php print "my program";', '/my/module.php');
             }.bind(this)).to.throw(Error, 'Bang');
         });
 
         it('should return a rejected promise when an error is thrown in asynchronous mode', function () {
             compiler.compile.throws(new Error('Bang'));
 
-            return expect(evaluator.evaluate('<?php print "my program";', '/my/module.php', mode))
+            return expect(evaluator.evaluate('<?php print "my program";', '/my/module.php'))
+                .to.eventually.be.rejectedWith(Error, 'Bang');
+        });
+
+        it('should return a rejected promise when an error is thrown in Promise-synchronous mode', function () {
+            createEvaluator('psync');
+            compiler.compile.throws(new Error('Bang'));
+
+            return expect(evaluator.evaluate('<?php print "my program";', '/my/module.php'))
                 .to.eventually.be.rejectedWith(Error, 'Bang');
         });
 
         it('should report PHPErrors from compilation', function () {
             var phpError = new PHPError(PHPError.E_ERROR, 'Oh dear');
-            mode.isSynchronous.returns(true);
+            createEvaluator('sync');
             compiler.compile.throws(phpError);
 
             try {
-                evaluator.evaluate('<?php print "my program";', '/my/module.php', mode);
+                evaluator.evaluate('<?php print "my program";', '/my/module.php');
             } catch (error) {}
 
             expect(environment.reportError).to.have.been.calledOnce;
@@ -113,22 +107,22 @@ describe('Evaluator', function () {
 
         it('should rethrow PHPErrors from compilation', function () {
             var phpError = new PHPError(PHPError.E_ERROR, 'Oh dear');
-            mode.isSynchronous.returns(true);
+            createEvaluator('sync');
             compiler.compile.throws(phpError);
 
             expect(function () {
-                evaluator.evaluate('<?php print "my program";', '/my/module.php', mode);
+                evaluator.evaluate('<?php print "my program";', '/my/module.php');
             }).to.throw(phpError);
         });
 
         it('should not report PHPErrors from execution', function () {
             var phpError = new PHPError(PHPError.E_ERROR, 'Oh dear');
-            mode.isSynchronous.returns(true);
+            createEvaluator('sync');
             phpEngine.execute
                 .throws(phpError);
 
             try {
-                evaluator.evaluate('<?php print "my program";', '/my/module.php', mode);
+                evaluator.evaluate('<?php print "my program";', '/my/module.php');
             } catch (error) {}
 
             expect(environment.reportError).not.to.have.been.called;
@@ -136,12 +130,12 @@ describe('Evaluator', function () {
 
         it('should not catch PHPErrors from compilation in synchronous mode', function () {
             var phpError = new PHPError(PHPError.E_ERROR, 'Oh dear');
-            mode.isSynchronous.returns(true);
+            createEvaluator('sync');
             phpEngine.execute
                 .throws(phpError);
 
             expect(function () {
-                evaluator.evaluate('<?php print "my program";', '/my/module.php', mode);
+                evaluator.evaluate('<?php print "my program";', '/my/module.php');
             }).to.throw(phpError);
         });
 
@@ -149,7 +143,16 @@ describe('Evaluator', function () {
             var phpError = new PHPError(PHPError.E_ERROR, 'Oh dear');
             compiler.compile.throws(phpError);
 
-            return expect(evaluator.evaluate('<?php print "my program";', '/my/module.php', mode))
+            return expect(evaluator.evaluate('<?php print "my program";', '/my/module.php'))
+                .to.eventually.be.rejectedWith(phpError);
+        });
+
+        it('should return a rejected promise when a PHPError is thrown by compilation in Promise-synchronous mode', function () {
+            var phpError = new PHPError(PHPError.E_ERROR, 'Oh dear');
+            createEvaluator('psync');
+            compiler.compile.throws(phpError);
+
+            return expect(evaluator.evaluate('<?php print "my program";', '/my/module.php'))
                 .to.eventually.be.rejectedWith(phpError);
         });
     });

@@ -65,48 +65,10 @@ describe('Bootstrapper', function () {
             });
         });
 
-        it('should call all bootstraps in async mode', function () {
-            return bootstrapper.bootstrap().then(function () {
-                expect(requirer.require).to.have.always.been.calledWith(
-                    sinon.match.any,
-                    sinon.match(function (mode) {
-                        return mode.isSynchronous() === false;
-                    })
-                );
-            });
-        });
-
         it('should work when no bootstraps are specified', function () {
             bootstrapper = new Bootstrapper(requirer, []);
 
             return expect(bootstrapper.bootstrap()).to.eventually.be.fulfilled;
-        });
-    });
-
-    describe('bootstrapSync()', function () {
-        it('should call all bootstraps synchronously in sequence', function () {
-            var log = [];
-            requirer.require.callsFake(function (path) {
-                log.push('require: ' + path);
-            });
-
-            bootstrapper.bootstrapSync();
-
-            expect(log).to.deep.equal([
-                'require: /path/to/first_bootstrap.php',
-                'require: /path/to/second_bootstrap.php'
-            ]);
-        });
-
-        it('should call all bootstraps in sync mode', function () {
-            bootstrapper.bootstrapSync();
-
-            expect(requirer.require).to.have.always.been.calledWith(
-                sinon.match.any,
-                sinon.match(function (mode) {
-                    return mode.isSynchronous();
-                })
-            );
         });
     });
 });

@@ -12,20 +12,20 @@
 var expect = require('chai').expect,
     tools = require('./tools');
 
-describe('DotPHP .evaluateSync(...) integration - synchronous PHP evaluation', function () {
+describe('DotPHP .evaluate(...) integration - synchronous PHP evaluation', function () {
     beforeEach(function () {
-        tools.init.call(this);
+        tools.init.call(this, __dirname + '/fixtures/sync');
     });
 
     it('should correctly evaluate a program with a simple top-level return statement', function () {
-        var result = this.dotPHP.evaluateSync('<?php return "my result";', '/my/module.php');
+        var result = this.dotPHP.evaluate('<?php return "my result";', '/my/module.php');
 
         expect(result.getType()).to.equal('string');
         expect(result.getNative()).to.equal('my result');
     });
 
     it('should correctly evaluate a program with an explicit exit code', function () {
-        var result = this.dotPHP.evaluateSync('<?php exit(21);', '/my/module.php');
+        var result = this.dotPHP.evaluate('<?php exit(21);', '/my/module.php');
 
         expect(result.getType()).to.equal('exit');
         expect(result.getStatus()).to.equal(21);
@@ -34,9 +34,9 @@ describe('DotPHP .evaluateSync(...) integration - synchronous PHP evaluation', f
     it('should perform evaluations in a shared environment', function () {
         var result;
         // Define a variable that the second evaluation should be able to access
-        this.dotPHP.evaluateSync('<?php $myVar = 1001;', '/my/first_module.php');
+        this.dotPHP.evaluate('<?php $myVar = 1001;', '/my/first_module.php');
 
-        result = this.dotPHP.evaluateSync('<?php return $myVar * 2;', '/my/second_module.php');
+        result = this.dotPHP.evaluate('<?php return $myVar * 2;', '/my/second_module.php');
 
         expect(result.getType()).to.equal('int');
         expect(result.getNative()).to.equal(2002);
