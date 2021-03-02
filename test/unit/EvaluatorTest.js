@@ -44,7 +44,9 @@ describe('Evaluator', function () {
         compiler.compile.returns(compiledModule);
         compiledModule.returns(phpEngine);
 
-        environmentProvider.getEnvironment.returns(environment);
+        environmentProvider.getEnvironment
+            .withArgs(sinon.match.same(compiler))
+            .returns(environment);
 
         createEvaluator = function (mode) {
             evaluator = new Evaluator(compiler, environmentProvider, mode);

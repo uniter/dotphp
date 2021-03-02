@@ -45,7 +45,7 @@ _.extend(Evaluator.prototype, {
      */
     evaluate: function (phpCode, filePath) {
         var evaluator = this,
-            environment = evaluator.environmentProvider.getEnvironment(),
+            environment = evaluator.environmentProvider.getEnvironment(evaluator.compiler),
             compiledModule,
             phpEngine,
             resultValueOrPromise;

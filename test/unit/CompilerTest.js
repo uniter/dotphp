@@ -49,7 +49,6 @@ describe('Compiler', function () {
         require = sinon.stub();
         transpiler = sinon.createStubInstance(Transpiler);
 
-        environmentProvider.getEnvironment.returns(environment);
         extendedCompiledModule.returns(phpEngine);
         compiledModule.using = sinon.stub().returns(extendedCompiledModule);
         includerFactory.create.returns(includer);
@@ -58,11 +57,14 @@ describe('Compiler', function () {
 
         compiler = new Compiler(
             transpiler,
-            includerFactory,
             require,
             environmentProvider,
             fileSystem
         );
+
+        environmentProvider.getEnvironment
+            .withArgs(sinon.match.same(compiler))
+            .returns(environment);
     });
 
     describe('compile()', function () {
@@ -78,32 +80,6 @@ describe('Compiler', function () {
 
             expect(transpiler.transpile).to.have.been.calledOnce;
             expect(transpiler.transpile).to.have.been.calledWith(sinon.match.any, '/my/awesome-module.php');
-        });
-
-        it('should pass the Compiler when creating the includer', function () {
-            compiler.compile('<?php print "my program";', '/my/awesome-module.php');
-
-            expect(includerFactory.create).to.have.been.calledOnce;
-            expect(includerFactory.create).to.have.been.calledWith(sinon.match.same(compiler));
-        });
-
-        it('should pass the created FileSystem when creating the includer', function () {
-            compiler.compile('<?php print "my program";', '/my/awesome-module.php');
-
-            expect(includerFactory.create).to.have.been.calledOnce;
-            expect(includerFactory.create).to.have.been.calledWith(
-                sinon.match.any,
-                sinon.match.same(fileSystem)
-            );
-        });
-
-        it('should extend the module factory with the created includer', function () {
-            compiler.compile('<?php print "my program";', '/my/module.php');
-
-            expect(compiledModule.using).to.have.been.calledOnce;
-            expect(compiledModule.using).to.have.been.calledWith(sinon.match({
-                include: sinon.match.same(includer)
-            }));
         });
 
         it('should extend the module factory with the file path', function () {

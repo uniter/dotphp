@@ -12,10 +12,12 @@
 var _ = require('microdash'),
     expect = require('chai').expect,
     sinon = require('sinon'),
+    Compiler = require('../../src/Compiler'),
     ConfigSet = require('phpconfig/dist/ConfigSet').default,
     Environment = require('phpcore/src/Environment'),
     EnvironmentProvider = require('../../src/EnvironmentProvider'),
     FileSystem = require('../../src/FileSystem'),
+    IncluderFactory = require('../../src/IncluderFactory'),
     IO = require('../../src/IO'),
     Performance = require('../../src/Performance'),
     Runtime = require('phpcore/src/Runtime').sync();
@@ -24,6 +26,8 @@ describe('EnvironmentProvider', function () {
     var asyncRuntime,
         createProvider,
         fileSystem,
+        includer,
+        includerFactory,
         io,
         performance,
         phpCoreConfigSet,
@@ -34,6 +38,8 @@ describe('EnvironmentProvider', function () {
     beforeEach(function () {
         asyncRuntime = sinon.createStubInstance(Runtime);
         fileSystem = sinon.createStubInstance(FileSystem);
+        includer = sinon.stub();
+        includerFactory = sinon.createStubInstance(IncluderFactory);
         io = sinon.createStubInstance(IO);
         performance = sinon.createStubInstance(Performance);
         phpCoreConfigSet = sinon.createStubInstance(ConfigSet);
@@ -56,6 +62,7 @@ describe('EnvironmentProvider', function () {
                 psyncRuntime,
                 syncRuntime,
                 io,
+                includerFactory,
                 fileSystem,
                 performance,
                 phpCoreConfigSet,
@@ -66,10 +73,20 @@ describe('EnvironmentProvider', function () {
     });
 
     describe('getEnvironment()', function () {
-        it('should return the same Environment on subsequent calls', function () {
-            var environment = provider.getEnvironment();
+        var compiler;
 
-            expect(provider.getEnvironment()).to.equal(environment);
+        beforeEach(function () {
+            compiler = sinon.createStubInstance(Compiler);
+
+            includerFactory.create
+                .withArgs(sinon.match.same(compiler), sinon.match.same(fileSystem))
+                .returns(includer);
+        });
+
+        it('should return the same Environment on subsequent calls', function () {
+            var environment = provider.getEnvironment(compiler);
+
+            expect(provider.getEnvironment(compiler)).to.equal(environment);
         });
 
         _.each(['async', 'psync', 'sync'], function (mode) {
@@ -87,13 +104,22 @@ describe('EnvironmentProvider', function () {
                 });
 
                 it('should create the Environment with the FileSystem and Performance services', function () {
-                    provider.getEnvironment();
+                    provider.getEnvironment(compiler);
 
                     expect(modeRuntime.createEnvironment).to.have.been.calledOnce;
-                    expect(modeRuntime.createEnvironment).to.have.been.calledWith({
+                    expect(modeRuntime.createEnvironment).to.have.been.calledWith(sinon.match({
                         fileSystem: sinon.match.same(fileSystem),
                         performance: sinon.match.same(performance)
-                    });
+                    }));
+                });
+
+                it('should create the Environment with the created includer', function () {
+                    provider.getEnvironment(compiler);
+
+                    expect(modeRuntime.createEnvironment).to.have.been.calledOnce;
+                    expect(modeRuntime.createEnvironment).to.have.been.calledWith(sinon.match({
+                        include: sinon.match.same(includer)
+                    }));
                 });
 
                 it('should pass any options through from the config', function () {
@@ -105,7 +131,7 @@ describe('EnvironmentProvider', function () {
                             myOption: 'my value'
                         });
 
-                    provider.getEnvironment();
+                    provider.getEnvironment(compiler);
 
                     expect(modeRuntime.createEnvironment).to.have.been.calledOnce;
                     expect(modeRuntime.createEnvironment).to.have.been.calledWith(sinon.match({
@@ -123,7 +149,7 @@ describe('EnvironmentProvider', function () {
                             myOption: 'my value'
                         });
 
-                    provider.getEnvironment();
+                    provider.getEnvironment(compiler);
 
                     expect(modeRuntime.createEnvironment).to.have.been.calledOnce;
                     expect(modeRuntime.createEnvironment).to.have.been.calledWith(sinon.match(function (options) {
@@ -141,7 +167,7 @@ describe('EnvironmentProvider', function () {
                             myOption: 'my value'
                         });
 
-                    provider.getEnvironment();
+                    provider.getEnvironment(compiler);
 
                     expect(modeRuntime.createEnvironment).to.have.been.calledOnce;
                     expect(modeRuntime.createEnvironment).to.have.been.calledWith(
@@ -158,7 +184,7 @@ describe('EnvironmentProvider', function () {
                             {'my': 'second addon'}
                         ]);
 
-                    provider.getEnvironment();
+                    provider.getEnvironment(compiler);
 
                     expect(modeRuntime.createEnvironment).to.have.been.calledOnce;
                     expect(modeRuntime.createEnvironment).to.have.been.calledWith(
@@ -173,17 +199,17 @@ describe('EnvironmentProvider', function () {
         });
 
         it('should install the IO for the Environment on first call', function () {
-            var environment = provider.getEnvironment();
+            var environment = provider.getEnvironment(compiler);
 
             expect(io.install).to.have.been.calledOnce;
             expect(io.install).to.have.been.calledWith(sinon.match.same(environment));
         });
 
         it('should not attempt to reinstall the IO for the Environment on second call', function () {
-            provider.getEnvironment();
+            provider.getEnvironment(compiler);
             io.install.resetHistory();
 
-            provider.getEnvironment(); // Second call
+            provider.getEnvironment(compiler); // Second call
 
             expect(io.install).not.to.have.been.called;
         });

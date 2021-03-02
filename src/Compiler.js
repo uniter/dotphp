@@ -13,7 +13,6 @@ var _ = require('microdash');
 
 /**
  * @param {Transpiler} transpiler
- * @param {IncluderFactory} includerFactory
  * @param {Function} require Node.js require(...) function to fetch the runtime via
  * @param {EnvironmentProvider} environmentProvider
  * @param {FileSystem} fileSystem
@@ -21,7 +20,6 @@ var _ = require('microdash');
  */
 function Compiler(
     transpiler,
-    includerFactory,
     require,
     environmentProvider,
     fileSystem
@@ -34,10 +32,6 @@ function Compiler(
      * @type {FileSystem}
      */
     this.fileSystem = fileSystem;
-    /**
-     * @type {IncluderFactory}
-     */
-    this.includerFactory = includerFactory;
     /**
      * @type {Function}
      */
@@ -61,9 +55,8 @@ _.extend(Compiler.prototype, {
         var compiler = this,
             transpiledCode = compiler.transpiler.transpile(phpCode, filePath),
             compiledModule = new Function('require', 'return ' + transpiledCode)(compiler.require),
-            environment = compiler.environmentProvider.getEnvironment(),
+            environment = compiler.environmentProvider.getEnvironment(compiler),
             configuredCompiledModule = compiledModule.using({
-                include: compiler.includerFactory.create(compiler, compiler.fileSystem),
                 path: filePath
             }, environment);
 
