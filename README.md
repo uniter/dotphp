@@ -28,9 +28,9 @@ print 'Hello from my_module!';
 JS file `my_entrypoint.js`:
 ```javascript
 // Register the extension for requiring .php files
-require('dotphp/register');
-
-require('./my_module.php')().execute();
+require('dotphp/register')().then(() => {
+    require('./my_module.php')().execute();
+});
 ```
 
 Requiring PHP files without hooking require(...)
