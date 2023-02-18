@@ -10,6 +10,7 @@
 'use strict';
 
 var _ = require('microdash'),
+    builtinAddons = require('./builtin/addons'),
     Bootstrapper = require('./Bootstrapper'),
     Compiler = require('./Compiler'),
     DotPHP = require('./DotPHP'),
@@ -152,7 +153,8 @@ _.extend(DotPHPFactory.prototype, {
                 fileSystem,
                 performance,
                 uniterConfig.getConfigsForLibrary('dotphp', 'phpcore'),
-                mode
+                mode,
+                builtinAddons
             ),
             compiler = new Compiler(
                 transpiler,

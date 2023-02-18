@@ -24,17 +24,15 @@ describe('DotPHP .transpile(...) integration - synchronous PHP transpilation', f
 
         expect(result).to.equal(
             nowdoc(function () {/*<<<EOS
-require('phpruntime/sync').compile(function(stdin, stdout, stderr, tools, namespace) {
-  var namespaceScope = tools.topLevelNamespaceScope,
-    namespaceResult, scope = tools.topLevelScope,
-    currentClass = null;
-  var line;
-  tools.instrument(function() {
+require('phpruntime/sync').compile(function(core) {
+  var createString = core.createString,
+    instrument = core.instrument,
+    line;
+  instrument(function() {
     return line;
   });
   line = 1;
-  return (line = 1, tools.valueFactory.createString("my result"));
-  return tools.valueFactory.createNull();
+  return (line = 1, createString("my result"));
 });
 EOS
 */;}) // jshint ignore:line

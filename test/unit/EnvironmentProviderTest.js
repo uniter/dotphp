@@ -24,6 +24,7 @@ var _ = require('microdash'),
 
 describe('EnvironmentProvider', function () {
     var asyncRuntime,
+        builtinAddons,
         createProvider,
         fileSystem,
         includer,
@@ -37,6 +38,7 @@ describe('EnvironmentProvider', function () {
 
     beforeEach(function () {
         asyncRuntime = sinon.createStubInstance(Runtime);
+        builtinAddons = [];
         fileSystem = sinon.createStubInstance(FileSystem);
         includer = sinon.stub();
         includerFactory = sinon.createStubInstance(IncluderFactory);
@@ -66,7 +68,8 @@ describe('EnvironmentProvider', function () {
                 fileSystem,
                 performance,
                 phpCoreConfigSet,
-                mode
+                mode,
+                builtinAddons
             );
         };
         createProvider('async');
@@ -155,6 +158,26 @@ describe('EnvironmentProvider', function () {
                     expect(modeRuntime.createEnvironment).to.have.been.calledWith(sinon.match(function (options) {
                         return !{}.hasOwnProperty.call(options, 'addons');
                     }));
+                });
+
+                it('should create the Environment with the builtin addons before provided ones', function () {
+                    builtinAddons.push({'builtin addon': 'yes'});
+                    phpCoreConfigSet.concatArrays
+                        .withArgs('addons')
+                        .returns([{'custom addon': 'one'}]);
+                    phpCoreConfigSet.mergeAll
+                        .returns({
+                            addons: [{'custom addon': 'one'}],
+                            myOption: 'my value'
+                        });
+
+                    provider.getEnvironment(compiler);
+
+                    expect(modeRuntime.createEnvironment).to.have.been.calledOnce;
+                    expect(modeRuntime.createEnvironment).to.have.been.calledWith(
+                        sinon.match.any,
+                        [{'builtin addon': 'yes'}, {'custom addon': 'one'}]
+                    );
                 });
 
                 it('should create the Environment with any provided addons', function () {
