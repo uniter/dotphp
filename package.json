@@ -7,14 +7,14 @@
     "uniter"
   ],
   "homepage": "https://github.com/uniter/dotphp",
-  "author": "Dan Phillimore <dan@ovms.co> (http://ovms.co)",
+  "author": "Dan Phillimore <dan@ovms.co>",
   "repository": {
     "type": "git",
     "url": "https://github.com/uniter/dotphp"
   },
   "bugs": {
     "email": "dan@ovms.co",
-    "url": "http://github.com/uniter/dotphp/issues"
+    "url": "https://github.com/uniter/dotphp/issues"
   },
   "main": "index",
   "bin": {
@@ -26,29 +26,29 @@
     "test": "npm run jshint && npm run mocha"
   },
   "dependencies": {
-    "js-beautify": "^1.11.0",
+    "js-beautify": "^1.14.7",
     "lie": "^3.3.0",
     "microdash": "^1.4.2",
-    "microtime": "^3.0.0",
-    "minimist": "^1.2.5",
-    "phpcommon": "^2.0.0",
-    "phpconfig": "^1.0.0",
-    "phpruntime": "^7.0.0",
-    "phptoast": "^8.0.0",
-    "phptojs": "^8.1.0"
+    "microtime": "^3.1.1",
+    "minimist": "^1.2.8",
+    "phpcommon": "^2.0.2",
+    "phpconfig": "^1.0.3",
+    "phpruntime": "^9.0.0",
+    "phptoast": "^9.1.0",
+    "phptojs": "^10.0.0"
   },
   "devDependencies": {
-    "chai": "^4.2.0",
+    "chai": "^4.3.7",
     "chai-as-promised": "^7.1.1",
-    "jshint": "^2.12.0",
-    "mocha": "^8.3.0",
-    "mocha-bootstrap": "^1.0.1",
-    "nowdoc": "^1.0.0",
-    "sinon": "^9.0.2",
-    "sinon-chai": "^3.5.0"
+    "jshint": "^2.13.6",
+    "mocha": "^10.2.0",
+    "mocha-bootstrap": "^1.0.4",
+    "nowdoc": "^1.0.1",
+    "sinon": "^15.0.1",
+    "sinon-chai": "^3.7.0"
   },
   "engines": {
-    "node": ">=0.6"
+    "node": ">=8"
   },
   "license": "MIT"
 }
