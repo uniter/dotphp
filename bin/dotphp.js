@@ -65,7 +65,7 @@ function handleError(error) {
         throw error;
     }
 
-    process.exitCode = error instanceof PHPParseError ? 254 : 255;
+    process.exit(error instanceof PHPParseError ? 254 : 255);
 }
 
 /**
