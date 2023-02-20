@@ -23,6 +23,7 @@ var _ = require('microdash');
  * @param {Performance} performance
  * @param {ConfigSet} phpCoreConfigSet
  * @param {string} mode
+ * @param {Array} builtinAddons
  * @constructor
  */
 function EnvironmentProvider(
@@ -34,12 +35,17 @@ function EnvironmentProvider(
     fileSystem,
     performance,
     phpCoreConfigSet,
-    mode
+    mode,
+    builtinAddons
 ) {
     /**
      * @type {Runtime}
      */
     this.asyncRuntime = asyncRuntime;
+    /**
+     * @type {Array}
+     */
+    this.builtinAddons = builtinAddons;
     /**
      * @type {Environment|null}
      */
@@ -117,7 +123,7 @@ _.extend(EnvironmentProvider.prototype, {
             environmentOptions,
             // Fetch all addons that may have been installed across all Uniter platform-level plugins
             // and the root level config
-            provider.phpCoreConfigSet.concatArrays('addons')
+            provider.builtinAddons.concat(provider.phpCoreConfigSet.concatArrays('addons'))
         );
 
         provider.io.install(provider.environment);
