@@ -38,8 +38,7 @@ function FileSystem(fs, streamFactory, process) {
 
 _.extend(FileSystem.prototype, {
     /**
-     * Determines whether the specified directory path exists in the FileSystem.
-     * Currently always returns true, as we cannot be sure from the info we have
+     * Determines whether the specified directory exists.
      *
      * @returns {boolean}
      */
@@ -55,9 +54,7 @@ _.extend(FileSystem.prototype, {
     },
 
     /**
-     * Determines whether the specified file exists in the FileSystem.
-     * Currently only compiled PHP modules can be in the FileSystem, so only those
-     * may be detected.
+     * Determines whether the specified file exists.
      *
      * @param {string} filePath
      * @returns {boolean}
@@ -74,7 +71,7 @@ _.extend(FileSystem.prototype, {
     },
 
     /**
-     * Opens a Stream for the specified file asynchronously
+     * Opens a Stream for the specified file asynchronously.
      *
      * @param {string} filePath
      * @returns {Promise} Resolves with a Stream for the file on success, rejects on failure
