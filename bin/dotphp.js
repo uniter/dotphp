@@ -102,7 +102,11 @@ function runPHP(phpCode) {
     }
 
     Promise.resolve(dotPHP.bootstrap())
-        .then(function () {
+        .then(function (resultValue) {
+            if (resultValue && resultValue.getType() === 'exit') {
+                return resultValue;
+            }
+
             return dotPHP.evaluate(phpCode, filePath);
         })
         .then(function (resultValue) {

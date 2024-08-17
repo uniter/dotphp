@@ -36,19 +36,26 @@ _.extend(Bootstrapper.prototype, {
     /**
      * Requires any bootstrap file(s), if specified in config, in sequence (if multiple are provided).
      * The returned promise will only be resolved once all have completed (or once the first module
-     * to reject has done so)
+     * to reject has done so).
      *
      * @returns {Promise|null}
      */
     bootstrap: function () {
         var bootstrapper = this,
-            // An array of file paths was given - require them in sequence
+            bootstrapFilePath,
+            i,
+            // An array of file paths was given - require them in sequence.
             remainingBootstraps = bootstrapper.bootstraps.slice();
 
         if (bootstrapper.mode === 'sync') {
-            remainingBootstraps.forEach(function (bootstrapFilePath) {
-                bootstrapper.requirer.require(bootstrapFilePath);
-            });
+            for (i = 0; i < remainingBootstraps.length; i++) {
+                bootstrapFilePath = remainingBootstraps[i];
+
+                if (bootstrapper.requirer.require(bootstrapFilePath).getType() === 'exit') {
+                    // A bootstrap has exited, so do not process any further ones.
+                    break;
+                }
+            }
 
             return null;
         }
@@ -58,17 +65,28 @@ _.extend(Bootstrapper.prototype, {
                 var bootstrapFilePath;
 
                 if (remainingBootstraps.length === 0) {
-                    // All bootstraps have been required
-                    resolve();
+                    // All bootstraps have been required.
+                    resolve(null);
                     return;
                 }
 
-                // Load the next bootstrap file
+                // Load the next bootstrap file.
                 bootstrapFilePath = remainingBootstraps.shift();
 
                 bootstrapper.requirer
                     .require(bootstrapFilePath)
-                    .then(deQueue, reject);
+                    .then(
+                        function (resultValue) {
+                            if (resultValue.getType() === 'exit') {
+                                // A bootstrap has exited, so do not process any further ones.
+                                resolve(resultValue);
+                                return;
+                            }
+
+                            deQueue();
+                        },
+                        reject
+                    );
             })();
         });
     }

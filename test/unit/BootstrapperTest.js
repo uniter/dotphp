@@ -12,7 +12,8 @@
 var expect = require('chai').expect,
     sinon = require('sinon'),
     Bootstrapper = require('../../src/Bootstrapper'),
-    Requirer = require('../../src/Requirer');
+    Requirer = require('../../src/Requirer'),
+    Value = require('phpcore/src/Value').sync();
 
 describe('Bootstrapper', function () {
     var bootstrapper,
@@ -36,6 +37,16 @@ describe('Bootstrapper', function () {
     });
 
     describe('bootstrap()', function () {
+        var firstBootstrapResultValue,
+            secondBootstrapResultValue;
+
+        beforeEach(function () {
+            firstBootstrapResultValue = sinon.createStubInstance(Value);
+            firstBootstrapResultValue.getType.returns('null');
+            secondBootstrapResultValue = sinon.createStubInstance(Value);
+            secondBootstrapResultValue.getType.returns('null');
+        });
+
         describe('in async mode', function () {
             var log;
 
@@ -49,6 +60,8 @@ describe('Bootstrapper', function () {
 
                         return Promise.resolve().then(function () {
                             log.push('first bootstrap done');
+
+                            return firstBootstrapResultValue;
                         });
                     });
                 requirer.require
@@ -58,22 +71,35 @@ describe('Bootstrapper', function () {
 
                         return Promise.resolve().then(function () {
                             log.push('second bootstrap done');
+
+                            return secondBootstrapResultValue;
                         });
                     });
 
                 createBootstrapper(null, 'async');
             });
 
-            it('should call all bootstraps asynchronously in sequence', function () {
-                return bootstrapper.bootstrap().then(function () {
-                    expect(log).to.deep.equal([
-                        'first bootstrap require',
-                        'first bootstrap done', // Ensure first bootstrap finishes before the second is started
+            it('should call all bootstraps asynchronously in sequence', async function () {
+                await bootstrapper.bootstrap();
 
-                        'second bootstrap require',
-                        'second bootstrap done'
-                    ]);
-                });
+                expect(log).to.deep.equal([
+                    'first bootstrap require',
+                    'first bootstrap done', // Ensure first bootstrap finishes before the second is started
+
+                    'second bootstrap require',
+                    'second bootstrap done'
+                ]);
+            });
+
+            it('should skip subsequent bootstraps when one has exited', async function () {
+                firstBootstrapResultValue.getType.returns('exit');
+
+                await bootstrapper.bootstrap();
+
+                expect(log).to.deep.equal([
+                    'first bootstrap require',
+                    'first bootstrap done'
+                ]);
             });
 
             it('should work when no bootstraps are specified', function () {
@@ -93,11 +119,15 @@ describe('Bootstrapper', function () {
                     .withArgs('/path/to/first_bootstrap.php')
                     .callsFake(function () {
                         log.push('first bootstrap require');
+
+                        return firstBootstrapResultValue;
                     });
                 requirer.require
                     .withArgs('/path/to/second_bootstrap.php')
                     .callsFake(function () {
                         log.push('second bootstrap require');
+
+                        return secondBootstrapResultValue;
                     });
 
                 createBootstrapper(null, 'sync');
@@ -109,6 +139,16 @@ describe('Bootstrapper', function () {
                 expect(log).to.deep.equal([
                     'first bootstrap require',
                     'second bootstrap require'
+                ]);
+            });
+
+            it('should skip subsequent bootstraps when one has exited', function () {
+                firstBootstrapResultValue.getType.returns('exit');
+
+                bootstrapper.bootstrap();
+
+                expect(log).to.deep.equal([
+                    'first bootstrap require'
                 ]);
             });
 

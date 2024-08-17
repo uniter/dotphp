@@ -49,12 +49,14 @@ _.extend(RequireExtension.prototype, {
         var extension = this,
             result;
 
-        function doInstall() {
+        function doInstall(result) {
             // Install a handler for Node.js require() of files with ".php" extension,
             // that compiles and executes PHP modules via Uniter
             extension.require.extensions['.php'] = function (module, filePath) {
                 module.exports = extension.fileCompiler.compile(filePath);
             };
+
+            return result;
         }
 
         result = extension.bootstrapper.bootstrap();

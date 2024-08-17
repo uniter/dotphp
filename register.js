@@ -13,20 +13,31 @@ var path = require('path');
 
 /**
  * Installs PHP support into the current Node.js environment,
- * hooking require(...) to support loading files with ".php" extension
+ * hooking require(...) to support loading files with ".php" extension.
  *
  * @param {string=} contextDirectory Directory to resolve uniter.config.js inside
  * @return {Promise|null}
  */
 module.exports = function (contextDirectory) {
-    var dotPHP;
+    var bootstrapResult,
+        dotPHP;
 
     if (!contextDirectory) {
-        // Use the directory of the entrypoint script as the context
+        // Use the directory of the entrypoint script as the context.
         contextDirectory = path.dirname(process.mainModule.filename);
     }
 
     dotPHP = require('.').create(contextDirectory);
 
-    return dotPHP.register();
+    bootstrapResult = dotPHP.register();
+
+    return bootstrapResult !== null ?
+        bootstrapResult.then(function (resultValue) {
+            if (resultValue !== null && resultValue.getType() === 'exit') {
+                process.exit(resultValue.getStatus());
+            }
+
+            return resultValue;
+        }) :
+        null;
 };

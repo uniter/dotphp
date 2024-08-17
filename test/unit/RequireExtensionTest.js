@@ -35,8 +35,6 @@ describe('RequireExtension', function () {
 
         require.extensions = {};
 
-        bootstrapper.bootstrap.returns(Promise.resolve());
-
         createExtension = function (mode) {
             extension = new RequireExtension(fileCompiler, bootstrapper, require, mode);
         };
@@ -45,42 +43,51 @@ describe('RequireExtension', function () {
 
     describe('install()', function () {
         describe('in async mode', function () {
-            it('should install a require(...) extension for the "php" file extension', function () {
-                return extension.install(options).then(function () {
-                    expect(require.extensions['.php']).to.be.a('function');
-                });
+            beforeEach(function () {
+                bootstrapper.bootstrap.returns(Promise.resolve('my result'));
             });
 
-            it('should install the require(...) extension after handling any bootstraps', function () {
-                return extension.install(options).then(function () {
-                    expect(bootstrapper.bootstrap).to.have.been.called;
-                });
+            it('should install a require(...) extension for the "php" file extension', async function () {
+                await extension.install(options);
+
+                expect(require.extensions['.php']).to.be.a('function');
+            });
+
+            it('should install the require(...) extension after handling any bootstraps', async function () {
+                await extension.install(options);
+
+                expect(bootstrapper.bootstrap).to.have.been.called;
+            });
+
+            it('should resolve with the bootstrap result', async function () {
+                expect(await extension.install(options)).to.equal('my result');
             });
 
             describe('the require(...) extension installed', function () {
-                it('should ask the FileCompiler to compile the module', function () {
-                    return extension.install(options).then(function () {
-                        require.extensions['.php'](module, '/my/file/path.php');
+                it('should ask the FileCompiler to compile the module', async function () {
+                    await extension.install(options);
 
-                        expect(fileCompiler.compile).to.have.been.calledOnce;
-                        expect(fileCompiler.compile).to.have.been.calledWith('/my/file/path.php');
-                    });
+                    require.extensions['.php'](module, '/my/file/path.php');
+
+                    expect(fileCompiler.compile).to.have.been.calledOnce;
+                    expect(fileCompiler.compile).to.have.been.calledWith('/my/file/path.php');
                 });
 
-                it('should set the result from the Requirer as module.exports', function () {
+                it('should set the result from the Requirer as module.exports', async function () {
                     fileCompiler.compile.returns(21);
 
-                    return extension.install(options).then(function () {
-                        require.extensions['.php'](module, '/my/file/path.php');
+                    await extension.install(options);
+                    require.extensions['.php'](module, '/my/file/path.php');
 
-                        expect(module.exports).to.equal(21);
-                    });
+                    expect(module.exports).to.equal(21);
                 });
             });
         });
 
         describe('in sync mode', function () {
             beforeEach(function () {
+                bootstrapper.bootstrap.returns('my result');
+
                 createExtension('sync');
             });
 
@@ -94,6 +101,10 @@ describe('RequireExtension', function () {
                 extension.install(options);
 
                 expect(bootstrapper.bootstrap).to.have.been.called;
+            });
+
+            it('should return the bootstrap result', async function () {
+                expect(extension.install(options)).to.equal('my result');
             });
 
             describe('the require(...) extension installed', function () {
