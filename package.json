@@ -1,5 +1,5 @@
 {
-  "version": "3.8.2",
+  "version": "3.8.3",
   "name": "dotphp",
   "description": "Require PHP files under Node.js with Uniter",
   "keywords": [
