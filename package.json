@@ -26,25 +26,25 @@
     "test": "npm run jshint && npm run mocha"
   },
   "dependencies": {
-    "js-beautify": "^1.14.7",
+    "js-beautify": "^1.15.1",
     "lie": "^3.3.0",
     "microdash": "^1.4.2",
     "microtime": "^3.1.1",
     "minimist": "^1.2.8",
     "phpcommon": "^2.0.2",
-    "phpconfig": "^1.0.3",
-    "phpruntime": "^9.0.1",
-    "phptoast": "^9.1.1",
-    "phptojs": "^10.0.1"
+    "phpconfig": "^1.0.4",
+    "phpruntime": "^9.1.0",
+    "phptoast": "^9.2.0",
+    "phptojs": "^10.1.0"
   },
   "devDependencies": {
     "chai": "^4.3.7",
     "chai-as-promised": "^7.1.1",
     "jshint": "^2.13.6",
-    "mocha": "^10.2.0",
-    "mocha-bootstrap": "^1.0.4",
+    "mocha": "^10.7.3",
+    "mocha-bootstrap": "^1.0.6",
     "nowdoc": "^1.0.1",
-    "sinon": "^15.0.1",
+    "sinon": "^17.0.1",
     "sinon-chai": "^3.7.0"
   },
   "engines": {
