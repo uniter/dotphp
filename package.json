@@ -33,12 +33,12 @@
     "minimist": "^1.2.8",
     "phpcommon": "^2.0.2",
     "phpconfig": "^1.0.4",
-    "phpruntime": "^9.1.1",
-    "phptoast": "^9.2.0",
-    "phptojs": "^10.1.0"
+    "phpruntime": "^9.2.0",
+    "phptoast": "^9.3.0",
+    "phptojs": "^10.2.0"
   },
   "devDependencies": {
-    "chai": "^4.3.7",
+    "chai": "^4.3.10",
     "chai-as-promised": "^7.1.1",
     "jshint": "^2.13.6",
     "mocha": "^10.7.3",
