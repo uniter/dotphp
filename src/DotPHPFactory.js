@@ -27,6 +27,7 @@ var _ = require('microdash'),
     StdinReader = require('./StdinReader'),
     Stream = require('./Stream'),
     StreamFactory = require('./StreamFactory'),
+    Stubber = require('./Stubber'),
     Transpiler = require('./Transpiler'),
     jsBeautify = require('js-beautify'),
     microtime = require('microtime'),
@@ -127,6 +128,7 @@ _.extend(DotPHPFactory.prototype, {
             },
             mode = getMode(phpToJSConfigSet.mergeAll()),
             pathMapper = new PathMapper(dotPHPConfigSet.mergeObjects('map')),
+            stubber = new Stubber(dotPHPConfigSet.mergeObjects('stub')),
             transpiler = new Transpiler(
                 phpToAST.create(null, _.extend(
                     {captureAllBounds: true},
@@ -149,7 +151,7 @@ _.extend(DotPHPFactory.prototype, {
                 factory.psyncRuntime,
                 factory.syncRuntime,
                 io,
-                new IncluderFactory(factory.fs, pathMapper),
+                new IncluderFactory(factory.fs, pathMapper, stubber),
                 fileSystem,
                 performance,
                 uniterConfig.getConfigsForLibrary('dotphp', 'phpcore'),
@@ -163,7 +165,7 @@ _.extend(DotPHPFactory.prototype, {
                 fileSystem
             ),
             evaluator = new Evaluator(compiler, environmentProvider, mode),
-            fileCompiler = new FileCompiler(factory.fs, pathMapper, compiler),
+            fileCompiler = new FileCompiler(factory.fs, pathMapper, stubber, compiler),
             requirer = new Requirer(fileCompiler),
             bootstrapper = new Bootstrapper(requirer, dotPHPConfigSet.concatArrays('bootstraps'), mode),
             dotPHP = new DotPHP(

@@ -14,9 +14,10 @@ var _ = require('microdash');
 /**
  * @param {fs} fs
  * @param {PathMapper} pathMapper
+ * @param {Stubber} stubber
  * @constructor
  */
-function IncluderFactory(fs, pathMapper) {
+function IncluderFactory(fs, pathMapper, stubber) {
     /**
      * @type {fs}
      */
@@ -25,6 +26,10 @@ function IncluderFactory(fs, pathMapper) {
      * @type {PathMapper}
      */
     this.pathMapper = pathMapper;
+    /**
+     * @type {Stubber}
+     */
+    this.stubber = stubber;
 }
 
 _.extend(IncluderFactory.prototype, {
@@ -45,10 +50,11 @@ _.extend(IncluderFactory.prototype, {
          * @param {{resolve: {function}, reject: {function}}} promise
          */
         function includer(filePath, promise) {
-            var moduleFactory,
+            var effectiveRealPath,
+                moduleFactory,
                 phpCode,
                 realPath,
-                effectiveRealPath;
+                stubCode;
 
             try {
                 realPath = fileSystem.realPath(filePath);
@@ -58,6 +64,15 @@ _.extend(IncluderFactory.prototype, {
             }
 
             effectiveRealPath = factory.pathMapper.map(realPath);
+
+            stubCode = factory.stubber.getStub(effectiveRealPath);
+
+            if (stubCode !== null) {
+                moduleFactory = compiler.compile(stubCode, realPath);
+                promise.resolve(moduleFactory);
+
+                return;
+            }
 
             try {
                 phpCode = factory.fs.readFileSync(effectiveRealPath).toString();

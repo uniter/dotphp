@@ -14,10 +14,11 @@ var _ = require('microdash');
 /**
  * @param {fs} fs FS module
  * @param {PathMapper} pathMapper
+ * @param {Stubber} stubber
  * @param {Compiler} compiler
  * @constructor
  */
-function FileCompiler(fs, pathMapper, compiler) {
+function FileCompiler(fs, pathMapper, stubber, compiler) {
     /**
      * @type {Compiler}
      */
@@ -30,11 +31,16 @@ function FileCompiler(fs, pathMapper, compiler) {
      * @type {PathMapper}
      */
     this.pathMapper = pathMapper;
+    /**
+     * @type {Stubber}
+     */
+    this.stubber = stubber;
 }
 
 _.extend(FileCompiler.prototype, {
     /**
-     * Reads and compiles the specified PHP file to a module factory
+     * Reads and compiles the specified PHP file to a module factory.
+     * If the file has a stub configured, the stub PHP code is compiled instead.
      *
      * @param {string} filePath
      * @returns {Function}
@@ -42,7 +48,14 @@ _.extend(FileCompiler.prototype, {
     compile: function (filePath) {
         var requirer = this,
             effectiveFilePath = requirer.pathMapper.map(filePath),
+            stubCode = requirer.stubber.getStub(effectiveFilePath),
+            phpCode;
+
+        if (stubCode !== null) {
+            phpCode = stubCode;
+        } else {
             phpCode = requirer.fs.readFileSync(effectiveFilePath).toString();
+        }
 
         return requirer.compiler.compile(phpCode, filePath);
     }

@@ -14,7 +14,8 @@ var expect = require('chai').expect,
     Compiler = require('../../src/Compiler'),
     FileSystem = require('../../src/FileSystem'),
     IncluderFactory = require('../../src/IncluderFactory'),
-    PathMapper = require('../../src/PathMapper');
+    PathMapper = require('../../src/PathMapper'),
+    Stubber = require('../../src/Stubber');
 
 describe('IncluderFactory', function () {
     var compiler,
@@ -25,7 +26,8 @@ describe('IncluderFactory', function () {
         pathMapper,
         promise,
         reject,
-        resolve;
+        resolve,
+        stubber;
 
     beforeEach(function () {
         compiler = sinon.createStubInstance(Compiler);
@@ -37,6 +39,7 @@ describe('IncluderFactory', function () {
         resolve = sinon.stub();
         reject = sinon.stub();
         pathMapper = sinon.createStubInstance(PathMapper);
+        stubber = sinon.createStubInstance(Stubber);
         promise = {
             resolve: resolve,
             reject: reject
@@ -48,9 +51,10 @@ describe('IncluderFactory', function () {
         pathMapper.map
             .withArgs('/my/real/path.php')
             .returns('/my/effective/real/path.php');
+        stubber.getStub.returns(null);
         compiler.compile.returns(moduleFactory);
 
-        includerFactory = new IncluderFactory(fs, pathMapper);
+        includerFactory = new IncluderFactory(fs, pathMapper, stubber);
     });
 
     describe('create()', function () {
@@ -154,6 +158,57 @@ describe('IncluderFactory', function () {
 
                 expect(resolve).to.have.been.calledOnce;
                 expect(resolve).to.have.been.calledWith(sinon.match.same(moduleFactory));
+            });
+
+            describe('when the effective (mapped) real path is stubbed', function () {
+                var stubbedModuleFactory;
+
+                beforeEach(function () {
+                    stubbedModuleFactory = sinon.stub();
+                    stubber.getStub
+                        .withArgs('/my/effective/real/path.php')
+                        .returns('<?php return 21;');
+                    compiler.compile
+                        .withArgs('<?php return 21;', '/my/real/path.php')
+                        .returns(stubbedModuleFactory);
+                });
+
+                it('should not read from the filesystem', function () {
+                    callCreate();
+
+                    includer('/my/module.php', promise);
+
+                    expect(fs.readFileSync).not.to.have.been.called;
+                });
+
+                it('should apply path mapping before checking the stub', function () {
+                    callCreate();
+
+                    includer('/my/module.php', promise);
+
+                    expect(pathMapper.map).to.have.been.calledWith('/my/real/path.php');
+                });
+
+                it('should compile the stub PHP code', function () {
+                    callCreate();
+
+                    includer('/my/module.php', promise);
+
+                    expect(compiler.compile).to.have.been.calledOnce;
+                    expect(compiler.compile).to.have.been.calledWith(
+                        '<?php return 21;',
+                        '/my/real/path.php' // compile receives the pre-mapping real path
+                    );
+                });
+
+                it('should resolve the promise with the stub module factory', function () {
+                    callCreate();
+
+                    includer('/my/module.php', promise);
+
+                    expect(resolve).to.have.been.calledOnce;
+                    expect(resolve).to.have.been.calledWith(sinon.match.same(stubbedModuleFactory));
+                });
             });
         });
     });

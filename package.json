@@ -31,11 +31,11 @@
     "microdash": "^1.4.2",
     "microtime": "^3.1.1",
     "minimist": "^1.2.8",
-    "phpcommon": "^2.0.2",
+    "phpcommon": "^2.0.3",
     "phpconfig": "^1.0.4",
-    "phpruntime": "^9.2.1",
-    "phptoast": "^9.3.0",
-    "phptojs": "^10.2.0"
+    "phpruntime": "^9.3.0",
+    "phptoast": "^9.4.1",
+    "phptojs": "^10.3.1"
   },
   "devDependencies": {
     "chai": "^4.3.10",
